@@ -2,12 +2,12 @@ import re
 from .stream import Stream
 from .line_processor import LineProcessor
 
+
 class CommentProcessor(LineProcessor):
     def __init__(self, source):
         self.source = source
         self.match = re.compile(r'(//+)|(/\*+)|(\*+/)')
-        self.comment_stream = Stream('{}-comment'.format(source))
-        self.data_stream = Stream('{}-data'.format(source))
+        self.comment_stream = Stream('{}-comments'.format(source))
         self.in_ml_comment = False
         self.in_comment = False
         self.line_num = 0
@@ -17,8 +17,8 @@ class CommentProcessor(LineProcessor):
         return "CommentProcessor {} (in_comment: {}, in_ml_comment: {}, line_num: {}, sequence: {})".format(
             self.source, self.in_comment, self.in_ml_comment, self.line_num, self.sequence)
 
-    def streams(self):
-        return [self.comment_stream, self.data_stream]
+    def stream(self):
+        return self.comment_stream
 
     def process_line(self, line):
         matches = []
@@ -30,7 +30,7 @@ class CommentProcessor(LineProcessor):
                 break
             matches.append(match)
             pos = match.end()
-        self.evaluate_matches(line, matches)
+        return self.evaluate_matches(line, matches)
 
     def evaluate_matches(self, line, matches):
         # the entire line is content
@@ -65,12 +65,11 @@ class CommentProcessor(LineProcessor):
 
         # line level comments always end immediately
         self.in_comment = False
+        return self
 
     def emit(self, pos, s):
         # print("{} <- ({}: '{}')".format(self, pos, s))
         self.sequence += 1
         if self.in_comment or self.in_ml_comment:
             self.comment_stream.append(self.sequence, pos, s)
-        else:
-            self.data_stream.append(self.sequence, pos, s)
 

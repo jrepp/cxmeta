@@ -29,17 +29,12 @@ multiline_function_c_style = r"""
 
 class TestCommentStream(unittest.TestCase):
     def test_empty(self):
-        proc = CommentProcessor('empty')
-        comments, data = proc.process_lines(r'')
+        comments = CommentProcessor('empty').process_lines(r'').stream()
         self.assertTrue(comments.is_empty())
-        self.assertTrue(data.is_empty())
 
     def test_multi_line_embedded(self):
         proc = CommentProcessor('multiline_function_c_style')
-        comments, data = proc.process_lines(multiline_function_c_style)
-
-        self.assertEqual(next(data.read()).data, r'')
-
+        comments = proc.process_lines(multiline_function_c_style).stream()
         i = comments.read()
         self.assertEqual(next(i).data, ' ..class:: mxfunction')
         self.assertEqual(next(i).data, ' *')
@@ -48,8 +43,7 @@ class TestCommentStream(unittest.TestCase):
 
     def test_compact(self):
         compact_tag = r'/*..class:: type*/'
-        streams = CommentProcessor('compact_tag').process_line(compact_tag)
-        comments, data = streams
+        comments = CommentProcessor('compact_tag').process_line(compact_tag).stream()
         first = next(comments.read()).data
         self.assertEqual(first, r'..class:: type')
 
@@ -57,12 +51,10 @@ class TestCommentStream(unittest.TestCase):
         two_lines = r"""//// blah
 // blah2
 """
-        streams = CommentProcessor('two_lines').process_lines(two_lines)
-        comments, data = streams
+        comments = CommentProcessor('two_lines').process_lines(two_lines).stream()
         i = comments.read()
         self.assertEqual(next(i).data, ' blah')
         self.assertEqual(next(i).data, ' blah2')
-        self.assertTrue(data.is_empty())
 
 
 if __name__ == '__main__':
