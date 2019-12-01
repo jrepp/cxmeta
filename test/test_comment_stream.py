@@ -28,6 +28,12 @@ multiline_function_c_style = r"""
 
 
 class TestCommentStream(unittest.TestCase):
+    def test_empty(self):
+        proc = CommentProcessor('empty')
+        comments, data = proc.process_lines(r'')
+        self.assertTrue(comments.is_empty())
+        self.assertTrue(data.is_empty())
+
     def test_multi_line_embedded(self):
         proc = CommentProcessor('multiline_function_c_style')
         comments, data = proc.process_lines(multiline_function_c_style)

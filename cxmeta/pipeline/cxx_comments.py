@@ -30,13 +30,13 @@ class CommentProcessor(LineProcessor):
                 break
             matches.append(match)
             pos = match.end()
-        return self.evaluate_matches(line, matches)
+        self.evaluate_matches(line, matches)
 
     def evaluate_matches(self, line, matches):
         # the entire line is content
         if len(matches) == 0:
             self.emit(0, line)
-            return self.streams()
+            return
 
         pos = 0
         for m in matches:
@@ -63,9 +63,8 @@ class CommentProcessor(LineProcessor):
         if capture:
             self.emit(pos, capture)
 
-        # line endings always end immediately
+        # line level comments always end immediately
         self.in_comment = False
-        return self.streams()
 
     def emit(self, pos, s):
         # print("{} <- ({}: '{}')".format(self, pos, s))
