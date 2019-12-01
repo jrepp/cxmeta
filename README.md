@@ -1,4 +1,4 @@
-# C eXposition of Metadata
+# C eXtract Metadata
 
 A python CLI and library to extract meta-data from Cxx style languages.
 
