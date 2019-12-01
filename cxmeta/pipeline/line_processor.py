@@ -8,12 +8,11 @@ class LineProcessor(object):
         elif type(lines) is str:
             for l in lines.splitlines():
                 self.process_line(l)
-        return self.streams()
 
     # Interface for line-at-a-time processing pipeline
     def process_line(self, line):
         pass
 
-    # Returns 0 or more streams of content
+    # Returns 0 or more streams of content after processing
     def streams(self):
         return list()
