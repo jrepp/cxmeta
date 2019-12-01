@@ -12,6 +12,7 @@ class StatementProcessor(LineProcessor):
     EXPR_GROUP_END = r'expr-group-end'
     MACRO_START = r'macro-start'
     LINE_CONT = r'line-cont'
+    CONTENT = r'content'
 
     def __init__(self, source):
         self.source = source
@@ -21,7 +22,9 @@ class StatementProcessor(LineProcessor):
         self.line_num = 0
         self.seq = 0
         self.data = Stream(source + '-data')
-        self.markers = Stream(source + '-markers')
+
+    def stream(self):
+        return self.data
 
     def process_line(self, line):
         matches = []
@@ -71,13 +74,14 @@ class StatementProcessor(LineProcessor):
                 self.emit(token_pos, capture)
                 self.emit_marker(token_pos, StatementProcessor.MACRO_START)
             pos = m.end()
+        return self
 
     def emit(self, pos, capture):
         print('[{}:{}#{}] "{}"'.format(self.data.name, self.line_num, pos, capture))
-        self.data.append(self.seq, pos, capture)
+        self.data.append(self.seq, pos, {'type': StatementProcessor.CONTENT, 'content': capture})
         self.seq += 1
 
     def emit_marker(self, pos, marker):
-        print('[{}:{}#{}] {}'.format(self.markers.name, self.line_num, pos, marker))
-        self.markers.append(self.seq, pos, marker)
+        print('[{}:{}#{}] {}'.format(self.data.name, self.line_num, pos, marker))
+        self.data.append(self.seq, pos, {'type': marker})
         self.seq += 1
