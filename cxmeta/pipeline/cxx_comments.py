@@ -10,11 +10,11 @@ class CommentProcessor(LineProcessor):
         self.comment_stream = Stream('{}-comments'.format(source))
         self.in_ml_comment = False
         self.in_comment = False
-        self.linenum = 0
+        self.line_num = 0
 
     def __str__(self):
-        return "CommentProcessor {} (in_comment: {}, in_ml_comment: {}, linenum: {})".format(
-            self.source, self.in_comment, self.in_ml_comment, self.linenum)
+        return "CommentProcessor {} (in_comment: {}, in_ml_comment: {}, line_num: {})".format(
+            self.source, self.in_comment, self.in_ml_comment, self.line_num)
 
     def stream(self):
         return self.comment_stream
@@ -22,7 +22,7 @@ class CommentProcessor(LineProcessor):
     def process_line(self, line):
         matches = []
         pos = 0
-        self.linenum += 1
+        self.line_num += 1
         while True:
             match = self.match.search(line, pos)
             if match is None:
@@ -69,5 +69,5 @@ class CommentProcessor(LineProcessor):
     def emit(self, pos, s):
         # print("{} <- ({}: '{}')".format(self, pos, s))
         if self.in_comment or self.in_ml_comment:
-            self.comment_stream.append(self.linenum, pos, {'content': s})
+            self.comment_stream.append(self.line_num, pos, {'content': s})
 
