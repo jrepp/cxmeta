@@ -9,8 +9,7 @@ import logging
 # class. See cxtypes.*
 #
 
-from cxmeta.pipeline.cxx_comments import CommentProcessor
-
+from cxmeta.pipeline.cxx_processor import Processor
 from cxmeta.pipeline import source_module, source_file
 
 
@@ -32,13 +31,19 @@ def next_content(i):
     return atom.data['content']
 
 
-class TestCommentStream(unittest.TestCase):
+class TestComments(unittest.TestCase):
     def test_empty(self):
-        comments = CommentProcessor('empty').process_lines(r'').stream()
+        comments = Processor(self.test_empty.__name__).process_lines(r'').stream()
         self.assertTrue(comments.is_empty())
 
+    def test_before_and_after_empty(self):
+        comments = Processor(self.test_before_and_after_empty.__name__).process_lines(r'  /**/  ').stream()
+        i = comments.read()
+        self.assertEqual(next_content(i), r'  ')
+        self.assertEqual(next_content(i), r'  ')
+
     def test_multi_line_embedded(self):
-        proc = CommentProcessor('multiline_function_c_style')
+        proc = Processor('multiline_function_c_style')
         comments = proc.process_lines(multiline_function_c_style).stream()
         i = comments.read()
         self.assertEqual(next_content(i), ' ..class:: mxfunction')
@@ -48,7 +53,7 @@ class TestCommentStream(unittest.TestCase):
 
     def test_compact(self):
         compact_tag = r'/*..class:: type*/'
-        comments = CommentProcessor('compact_tag').process_line(compact_tag).stream()
+        comments = Processor('compact_tag').process_line(compact_tag).stream()
         first = next_content(comments.read())
         self.assertEqual(first, r'..class:: type')
 
@@ -56,7 +61,7 @@ class TestCommentStream(unittest.TestCase):
         two_lines = r"""//// blah
 // blah2
 """
-        comments = CommentProcessor('two_lines').process_lines(two_lines).stream()
+        comments = Processor('two_lines').process_lines(two_lines).stream()
         i = comments.read()
         self.assertEqual(next_content(i), ' blah')
         self.assertEqual(next_content(i), ' blah2')

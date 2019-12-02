@@ -2,14 +2,14 @@ import uuid
 
 
 class Atom(object):
-    def __init__(self, linenum, position, data):
-        self.linenum = linenum
+    def __init__(self, line_num, position, data):
+        self.line_num = line_num
         self.position = position
         self.data = data
 
     def __str__(self):
         return "<line: {}, pos: {}, data: '{}'>".format(
-            self.linenum, self.position, self.data)
+            self.line_num, self.position, self.data)
 
 
 def random_name():
@@ -34,6 +34,6 @@ class Stream(object):
         for atom in self.content:
             yield atom
 
-    def append(self, linenum, position, data):
-        self.content.append(Atom(linenum, position, data))
+    def append(self, line_num, position, data):
+        self.content.append(Atom(line_num, position, data))
 
