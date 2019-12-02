@@ -3,6 +3,7 @@ import  re
 from .line_processor import LineProcessor
 from .stream import Stream
 
+
 class StatementProcessor(LineProcessor):
     # Stream markers
     BLOCK_START = r'block-start'
@@ -19,8 +20,7 @@ class StatementProcessor(LineProcessor):
         self.match = re.compile(r'\(|\)|\{|\}|^#|\\$|\;')
         self.block_level = 0
         self.in_decl = False
-        self.line_num = 0
-        self.seq = 0
+        self.linenum = 0
         self.data = Stream(source + '-data')
 
     def stream(self):
@@ -29,7 +29,7 @@ class StatementProcessor(LineProcessor):
     def process_line(self, line):
         matches = []
         pos = 0
-        self.line_num += 1
+        self.linenum += 1
         while True:
             match = self.match.search(line, pos)
             if match is None or match.start() == match.end():
@@ -77,11 +77,9 @@ class StatementProcessor(LineProcessor):
         return self
 
     def emit(self, pos, capture):
-        print('[{}:{}#{}] "{}"'.format(self.data.name, self.line_num, pos, capture))
-        self.data.append(self.seq, pos, {'type': StatementProcessor.CONTENT, 'content': capture})
-        self.seq += 1
+        print('[{}:{}#{}] "{}"'.format(self.data.name, self.linenum, pos, capture))
+        self.data.append(self.linenum, pos, {'type': StatementProcessor.CONTENT, 'content': capture})
 
     def emit_marker(self, pos, marker):
-        print('[{}:{}#{}] {}'.format(self.data.name, self.line_num, pos, marker))
-        self.data.append(self.seq, pos, {'type': marker})
-        self.seq += 1
+        print('[{}:{}#{}] {}'.format(self.data.name, self.linenum, pos, marker))
+        self.data.append(self.linenum, pos, {'type': marker})

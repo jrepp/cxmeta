@@ -14,7 +14,8 @@ class TestBasics(unittest.TestCase):
 
     def test_stream(self):
         s = Stream('source-name')
-        s.append(1, )
+        s.append(1, 0, 'test')
+
 
 if __name__ == '__main__':
     unittest.main()
