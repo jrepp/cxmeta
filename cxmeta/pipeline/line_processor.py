@@ -15,5 +15,5 @@ class LineProcessor(object):
         return self
 
     # Returns 0 or more streams of content after processing
-    def streams(self):
+    def stream(self):
         return None
