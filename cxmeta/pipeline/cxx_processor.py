@@ -44,7 +44,7 @@ class Processor(LineProcessor):
 
     def evaluate_matches(self, line, matches):
         if len(matches) == 0:
-            self.emit(0, line)
+            self.emit(0, line + "\n")
             return
 
         pos = 0
@@ -64,7 +64,7 @@ class Processor(LineProcessor):
             token = line[m.start():m.end()]
             token_pos = m.start()
             in_comment = self.in_comment | self.in_ml_comment
-            print("match: '{}' pos: {}, comment?: {}".format(token, token_pos, in_comment))
+            # print("match: '{}' pos: {}, comment?: {}".format(token, token_pos, in_comment))
             if not in_comment:
                 if token is '{':
                     self.emit(pos, capture_including(token_pos))
@@ -90,6 +90,9 @@ class Processor(LineProcessor):
                     # emit content up to the comment marker
                     self.emit(pos, capture_upto(token_pos))
                     self.in_ml_comment = True
+                elif token.startswith('//'):
+                    self.emit(pos, capture_upto(token_pos))
+                    self.in_comment = True
             elif token.endswith('*/'):
                 assert (self.in_ml_comment is True)
                 self.emit(pos, capture_upto(token_pos))
@@ -100,19 +103,16 @@ class Processor(LineProcessor):
             elif token is '#':  # only matches at beginning of line
                 self.emit(pos, capture_including(token_pos))
                 self.emit_marker(token_pos, Processor.MACRO_START)
-            elif token.startswith('//'):
-                self.emit(pos, capture_upto(token_pos))
-                self.in_comment = True
             else:
                 assert(False)  # unspecified token
                 self.emit(pos, capture_upto(token_pos))
-
-            # line level comments always end immediately
-            self.in_comment = False
             pos = m.end()
 
         # write the remainder of the line if any
-        self.emit(pos, capture_remaining(pos))
+        self.emit(pos, capture_remaining(pos) + "\n")
+
+        # line level comments always end when the line is finished
+        self.in_comment = False
 
     def emit(self, pos, capture):
         if not capture:
@@ -120,9 +120,9 @@ class Processor(LineProcessor):
         is_comment = self.in_ml_comment | self.in_comment
         print('[{}:{}#{}] "{}" comment?: {}'.format(self.stream_data.name, self.line_num, pos, capture, is_comment))
         if is_comment:
-            self.stream_data.append(self.line_num, pos, {'type': Processor.CONTENT, 'content': capture})
-        else:
             self.stream_data.append(self.line_num, pos, {'type': Processor.COMMENT, 'content': capture})
+        else:
+            self.stream_data.append(self.line_num, pos, {'type': Processor.CONTENT, 'content': capture})
 
     def emit_marker(self, pos, marker):
         print('[{}:{}#{}] {}'.format(self.stream_data.name, self.line_num, pos, marker))

@@ -17,10 +17,10 @@ void my_function(int foo);
 class TestCombiner(unittest.TestCase):
     def test_combine(self):
         combiner = Combiner(self.test_combine.__name__).process_lines(simple_combine)
-        print(combiner.combine())
-        #i = stream.read()
-        #print(str(next(i)))
-        #print(str(next(i)))
+        combiner.combine()
+        for atom in combiner.stream().read():
+            chunk = atom.data
+            print(chunk)
 
 
 if __name__ == '__main__':
