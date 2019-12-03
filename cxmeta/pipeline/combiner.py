@@ -23,11 +23,13 @@ class Combiner(LineProcessor):
         self.chunk = None
         self.comments = list()
         self.statements = list()
+        self.in_comment = False
+        self.newline = '\n'
 
     def process_line(self, line):
         self.proc.process_line(line)
 
-    def finish_chunk(self):
+    def _finish_chunk(self):
         if self.chunk.class_name:
             self.chunk.comment = ''.join(self.comments)
             self.chunk.stmt = ''.join(self.statements)
@@ -36,27 +38,39 @@ class Combiner(LineProcessor):
             self.comments = list()
             self.statements = list()
 
-    def comment_handler(self, atom):
+    def _block_end_handler(self, _):
+        self._finish_chunk()
+
+    def _statement_end_handler(self, _):
+        self._finish_chunk()
+
+    def _content_handler(self, atom):
         content = atom.data[r'content']
-        self.comments.append(content)
-        if content.strip().startswith('..class::'):
-            self.chunk.class_name = content.split('::')[-1].strip()
-            self.chunk.line_num = atom.line_num
+        comment = atom.data[r'comment']
+        if comment:
+            if not self.in_comment:
+                self._finish_chunk()
+                self.in_comment = True
 
-    def block_end_handler(self, _):
-        self.finish_chunk()
+            self.comments.append(content)
+            if content.strip().startswith('..class::'):
+                self.chunk.class_name = content.split('::')[-1].strip()
+                self.chunk.line_num = atom.line_num
+        else:
+            self.in_comment = False
+            self.statements.append(atom.data[r'content'])
 
-    def statement_end_handler(self, _):
-        self.finish_chunk()
-
-    def content_handler(self, atom):
-        self.statements.append(atom.data[r'content'])
-
-    def default_handler(self, atom):
+    def _default_handler(self, atom):
         if type(atom.data) is dict:
             content = atom.data.get(r'content')
             if content:
                 self.statements.append(content)
+
+    def _newline_handler(self, atom):
+        if atom.data[r'comment']:
+            self.comments.append(self.newline)
+        else:
+            self.statements.append(self.newline)
 
     def combine(self):
         self.chunk = Chunk()
@@ -64,14 +78,15 @@ class Combiner(LineProcessor):
         self.statements = list()
 
         handlers = {
-            r'content': self.content_handler,
-            r'comment': self.comment_handler,
-            r'block-end': self.block_end_handler,
-            r'stmt-end': self.statement_end_handler,
+            r'content': self._content_handler,
+            r'block-end': self._block_end_handler,
+            r'stmt-end': self._statement_end_handler,
+            r'newline': self._newline_handler
         }
         for atom in self.proc.stream().read():
-            handler = handlers.get(atom.data[r'type']) or self.default_handler
+            handler = handlers.get(atom.data[r'type']) or self._default_handler
             handler(atom)
+        self._finish_chunk()
 
     def stream(self):
         return self.stream_data
