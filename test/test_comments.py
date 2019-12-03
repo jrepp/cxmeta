@@ -27,8 +27,11 @@ multiline_function_c_style = r"""
 
 
 def next_content(i):
-    atom = next(i)
-    return atom.data['content']
+    while True:
+        atom = next(i)
+        content = atom.data.get('content')
+        if content:
+            return content
 
 
 class TestComments(unittest.TestCase):
@@ -48,7 +51,7 @@ class TestComments(unittest.TestCase):
         i = comments.read()
         self.assertEqual(next_content(i), ' ..class:: mxfunction')
         self.assertEqual(next_content(i), ' *')
-        self.assertEqual(next_content(i), ' *  ')
+        self.assertEqual(next_content(i), ' *  //')
         self.assertEqual(next_content(i), ' embedded string comment')
 
     def test_compact(self):
