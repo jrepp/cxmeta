@@ -1,7 +1,11 @@
-import  re
+import re
 
 from .line_processor import LineProcessor
 from .stream import Stream
+
+
+# Expression to find all parsable tokens in a line of C++
+REGEXP = r'\(|\)|\{|\}|^#|\\$|\;|(\/{2,})|(/\*{2,}/)|(/\*{1,})|(\*{1,}/)'
 
 
 class Processor(LineProcessor):
@@ -18,7 +22,7 @@ class Processor(LineProcessor):
 
     def __init__(self, source):
         self.source = source
-        self.match = re.compile(r'\(|\)|\{|\}|^#|\\$|\;|(\/{2,})|(/\*{2,}/)|(/\*{1,})|(\*{1,}/)')
+        self.match = re.compile(REGEXP)
         self.block_level = 0
         self.in_decl = False
         self.line_num = 0
@@ -64,25 +68,26 @@ class Processor(LineProcessor):
 
             token = line[m.start():m.end()]
             in_comment = self.in_comment | self.in_ml_comment
-            # print("match: '{}' pos: {}, comment?: {}".format(token, token_pos, in_comment))
+            # print("match: '{}' pos: {}, comment?: {}".format(
+            #   token, token_pos, in_comment))
             if not in_comment:
-                if token is '{':
+                if token == '{':
                     self.emit(pos, capture_including(m.end()))
                     self.block_level += 1
                     if self.block_level == 1:
                         self.emit_marker(m.start(), Processor.BLOCK_START)
-                elif token is '}':
+                elif token == '}':
                     self.emit(pos, capture_including(m.end()))
                     self.block_level -= 1
                     if self.block_level == 0:
                         self.emit_marker(m.start(), Processor.BLOCK_END)
-                elif token is ';':
+                elif token == ';':
                     self.emit(pos, capture_including(m.end()))
                     self.emit_marker(m.start(), Processor.STMT_END)
-                elif token is '(':
+                elif token == '(':
                     self.emit(pos, capture_including(m.end()))
                     self.emit_marker(m.start(), Processor.EXPR_GROUP_START)
-                elif token is ')':
+                elif token == ')':
                     self.emit(pos, capture_including(m.end()))
                     self.emit_marker(m.start(), Processor.EXPR_GROUP_END)
                 elif token.startswith('/*'):
@@ -97,10 +102,10 @@ class Processor(LineProcessor):
                 assert (self.in_ml_comment is True)
                 self.emit(pos, capture_upto(m.start()))
                 self.in_ml_comment = False
-            elif token is '\\':  # only matches at end of line
+            elif token == '\\':  # only matches at end of line
                 self.emit(pos, capture_including(m.end()))
                 self.emit_marker(m.start(), Processor.LINE_CONT)
-            elif token is '#':  # only matches at beginning of line
+            elif token == '#':  # only matches at beginning of line
                 self.emit(pos, capture_including(m.end()))
                 self.emit_marker(m.start(), Processor.MACRO_START)
             else:
@@ -119,10 +124,20 @@ class Processor(LineProcessor):
         if not capture:
             return
         is_comment = self.in_ml_comment | self.in_comment
-        print('[{}:{}#{}] "{}" comment?: {}'.format(self.stream_data.name, self.line_num, pos, capture, is_comment))
-        self.stream_data.append(self.line_num, pos, {'type': Processor.CONTENT, 'comment': is_comment, 'content': capture})
+        print('[{}:{}#{}] "{}" comment?: {}'.format(
+            self.stream_data.name, self.line_num, pos, capture, is_comment))
+        self.stream_data.append(
+            self.line_num,
+            pos,
+            {r'type': Processor.CONTENT,
+             r'comment': is_comment,
+             r'content': capture})
 
     def emit_marker(self, pos, marker):
         is_comment = self.in_ml_comment | self.in_comment
-        print('[{}:{}#{}] {} comment?: {}'.format(self.stream_data.name, self.line_num, pos, marker, is_comment))
-        self.stream_data.append(self.line_num, pos, {'type': marker, 'comment': is_comment})
+        print('[{}:{}#{}] {} comment?: {}'.format(
+            self.stream_data.name, self.line_num, pos, marker, is_comment))
+        self.stream_data.append(
+            self.line_num,
+            pos,
+            {'type': marker, 'comment': is_comment})

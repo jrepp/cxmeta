@@ -1,4 +1,10 @@
 from setuptools import setup, find_packages
+
+
+DESCRIPTION = 'A python CLI and library to extract \
+meta-data from Cxx style languages.'
+
+
 setup(
     name="cxmeta",
     version="0.1",
@@ -11,12 +17,12 @@ setup(
     package_data={
         '': ['*.md', '*.rst']
     },
-    entry_points = {
+    entry_points={
         'console_scripts': ['cxmeta=cxmeta.tools.cli:main'],
     },
     author='Jacob Repp',
     author_email='jacobrepp@gmail.com',
-    description='A python CLI and library to extract meta-data from Cxx style languages.',
+    description=DESCRIPTION,
     keywords='Cxx C C++ documentation docs rst markdown build',
     url='https://github.com/jrepp/cxmeta',
     project_urls={

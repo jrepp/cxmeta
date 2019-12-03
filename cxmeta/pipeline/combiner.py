@@ -1,5 +1,3 @@
-import itertools
-
 from .line_processor import LineProcessor
 from .cxx_processor import Processor
 from .stream import Stream
@@ -90,4 +88,3 @@ class Combiner(LineProcessor):
 
     def stream(self):
         return self.stream_data
-

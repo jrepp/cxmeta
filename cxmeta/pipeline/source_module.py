@@ -1,6 +1,6 @@
 import os
-
 from cxmeta.pipeline.source_file import FileProcessor
+
 
 class Module(object):
     def __init__(self, name):
@@ -16,7 +16,7 @@ class Module(object):
                 file_proc.process()
 
 
-# Convert the directory name of the path into the modulename 
+# Convert the directory name of the path into the modulename
 def module_name(source_path):
     path_parts = os.path.split(source_path)
     if not path_parts[-1]:

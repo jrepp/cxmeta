@@ -36,4 +36,3 @@ class Stream(object):
 
     def append(self, line_num, position, data):
         self.content.append(Atom(line_num, position, data))
-
