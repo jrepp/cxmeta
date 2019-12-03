@@ -15,6 +15,7 @@ class Processor(LineProcessor):
     LINE_CONT = r'line-cont'
     CONTENT = r'content'
     COMMENT = r'comment'
+    NEWLINE = r'newline'
 
     def __init__(self, source):
         self.source = source
@@ -44,13 +45,14 @@ class Processor(LineProcessor):
 
     def evaluate_matches(self, line, matches):
         if len(matches) == 0:
-            self.emit(0, line + "\n")
+            self.emit(0, line)
+            self.emit_marker(len(line), Processor.NEWLINE)
             return
 
         pos = 0
 
         def capture_including(p):
-            return line[pos:p + 1]
+            return line[pos:p]
 
         def capture_upto(p):
             return line[pos:p]
@@ -62,54 +64,54 @@ class Processor(LineProcessor):
             assert(m is not None)
 
             token = line[m.start():m.end()]
-            token_pos = m.start()
             in_comment = self.in_comment | self.in_ml_comment
             # print("match: '{}' pos: {}, comment?: {}".format(token, token_pos, in_comment))
             if not in_comment:
                 if token is '{':
-                    self.emit(pos, capture_including(token_pos))
+                    self.emit(pos, capture_including(m.end()))
                     self.block_level += 1
                     if self.block_level == 1:
-                        self.emit_marker(token_pos, Processor.BLOCK_START)
+                        self.emit_marker(m.start(), Processor.BLOCK_START)
                 elif token is '}':
-                    self.emit(pos, capture_including(token_pos))
+                    self.emit(pos, capture_including(m.end()))
                     self.block_level -= 1
                     if self.block_level == 0:
-                        self.emit_marker(token_pos, Processor.BLOCK_END)
+                        self.emit_marker(m.start(), Processor.BLOCK_END)
                 elif token is ';':
-                    self.emit(pos, capture_including(token_pos))
-                    self.emit_marker(token_pos, Processor.STMT_END)
+                    self.emit(pos, capture_including(m.end()))
+                    self.emit_marker(m.start(), Processor.STMT_END)
                 elif token is '(':
-                    self.emit(pos, capture_including(token_pos))
-                    self.emit_marker(token_pos, Processor.EXPR_GROUP_START)
+                    self.emit(pos, capture_including(m.end()))
+                    self.emit_marker(m.start(), Processor.EXPR_GROUP_START)
                 elif token is ')':
-                    self.emit(pos, capture_including(token_pos))
-                    self.emit_marker(token_pos, Processor.EXPR_GROUP_END)
+                    self.emit(pos, capture_including(m.end()))
+                    self.emit_marker(m.start(), Processor.EXPR_GROUP_END)
                 elif token.startswith('/*'):
                     assert (self.in_ml_comment is False)
                     # emit content up to the comment marker
-                    self.emit(pos, capture_upto(token_pos))
+                    self.emit(pos, capture_upto(m.start()))
                     self.in_ml_comment = True
                 elif token.startswith('//'):
-                    self.emit(pos, capture_upto(token_pos))
+                    self.emit(pos, capture_upto(m.start()))
                     self.in_comment = True
             elif token.endswith('*/'):
                 assert (self.in_ml_comment is True)
-                self.emit(pos, capture_upto(token_pos))
+                self.emit(pos, capture_upto(m.start()))
                 self.in_ml_comment = False
             elif token is '\\':  # only matches at end of line
-                self.emit(pos, capture_including(token_pos))
-                self.emit_marker(token_pos, Processor.LINE_CONT)
+                self.emit(pos, capture_including(m.end()))
+                self.emit_marker(m.start(), Processor.LINE_CONT)
             elif token is '#':  # only matches at beginning of line
-                self.emit(pos, capture_including(token_pos))
-                self.emit_marker(token_pos, Processor.MACRO_START)
+                self.emit(pos, capture_including(m.end()))
+                self.emit_marker(m.start(), Processor.MACRO_START)
             else:
-                assert(False)  # unspecified token
-                self.emit(pos, capture_upto(token_pos))
+                self.emit(pos, capture_including(m.end()))
             pos = m.end()
 
         # write the remainder of the line if any
-        self.emit(pos, capture_remaining(pos) + "\n")
+        capture = capture_remaining(pos)
+        self.emit(pos, capture)
+        self.emit_marker(pos + len(capture), Processor.NEWLINE)
 
         # line level comments always end when the line is finished
         self.in_comment = False
