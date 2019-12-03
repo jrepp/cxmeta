@@ -38,21 +38,24 @@ void function_three () {}
 
 class TestCombiner(unittest.TestCase):
     def test_combine(self):
-        combiner = Combiner(self.test_combine.__name__).process_lines(simple_combine)
+        combiner = Combiner(self.test_combine.__name__)\
+            .process_lines(simple_combine)
         combiner.combine()
         for atom in combiner.stream().read():
             chunk = atom.data
             print(chunk)
 
     def test_combine_two(self):
-        combiner = Combiner(self.test_combine_two.__name__).process_lines(two_chunks)
+        combiner = Combiner(self.test_combine_two.__name__)\
+            .process_lines(two_chunks)
         combiner.combine()
         for atom in combiner.stream().read():
             chunk = atom.data
             print(chunk)
 
     def test_combine_three_styles(self):
-        combiner = Combiner(self.test_combine_three_styles.__name__).process_lines(three_blocks)
+        combiner = Combiner(self.test_combine_three_styles.__name__)\
+            .process_lines(three_blocks)
         combiner.combine()
         for atom in combiner.stream().read():
             chunk = atom.data

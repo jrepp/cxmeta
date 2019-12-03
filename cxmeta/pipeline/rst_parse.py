@@ -1,17 +1,19 @@
-# RST parsing tip by: https://stackoverflow.com/users/4973698/mbdevpl
-
 import docutils.nodes
 import docutils.parsers.rst
 import docutils.utils
 import docutils.frontend
 
+
+# RST parsing tip by: https://stackoverflow.com/users/4973698/mbdevpl
 def parse_rst(text: str) -> docutils.nodes.document:
     parser = docutils.parsers.rst.Parser()
     components = (docutils.parsers.rst.Parser,)
-    settings = docutils.frontend.OptionParser(components=components).get_default_values()
+    settings = docutils.frontend.OptionParser(
+        components=components).get_default_values()
     document = docutils.utils.new_document('<rst-doc>', settings=settings)
     parser.parse(text, document)
     return document
+
 
 class MyVisitor(docutils.nodes.NodeVisitor):
     def visit_reference(self, node: docutils.nodes.reference) -> None:
@@ -21,6 +23,7 @@ class MyVisitor(docutils.nodes.NodeVisitor):
     def unknown_visit(self, node: docutils.nodes.Node) -> None:
         """Called for all other node types."""
         pass
+
 
 doc = parse_rst('spam spam lovely spam')
 visitor = MyVisitor(doc)

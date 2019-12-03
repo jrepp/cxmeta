@@ -9,7 +9,7 @@ static int foobaz = 42;
 """
 
 enum_statement = r"""
-typedef enum 
+typedef enum
 {
 E_A_VALUE = 1,
 E_B_VALUE = 0x2,
@@ -59,9 +59,11 @@ TestStruct* RANDOM_MACRO API_WRAPPER(define_a_func)(TestStruct* foo, int a) {
 
 func_nested = r"""
 void nested_func() {
-    do { if (canwe) { for(auto &v : items} { if(v.legit) { v.baz(); } } } } while(getting_there);
+    do { if (canwe) { for(auto &v : items} { \
+        if(v.legit) { v.baz(); } } } } while(getting_there);
 }
 """
+
 
 class TestStatements(unittest.TestCase):
     def test_file_level(self):

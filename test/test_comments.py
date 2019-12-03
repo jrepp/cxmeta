@@ -10,7 +10,6 @@ import logging
 #
 
 from cxmeta.pipeline.cxx_processor import Processor
-from cxmeta.pipeline import source_module, source_file
 
 
 # Use as many * characters as you want
@@ -18,7 +17,7 @@ multiline_function_c_style = r"""
 /******* ..class:: mxfunction
  *
  *  // embedded string comment
- * 
+ *
  * # Section header
  *
  * Some standard paragraph
@@ -36,11 +35,13 @@ def next_content(i):
 
 class TestComments(unittest.TestCase):
     def test_empty(self):
-        comments = Processor(self.test_empty.__name__).process_lines(r'').stream()
+        comments = Processor(self.test_empty.__name__)\
+            .process_lines(r'').stream()
         self.assertTrue(comments.is_empty())
 
     def test_before_and_after_empty(self):
-        comments = Processor(self.test_before_and_after_empty.__name__).process_lines(r'  /**/  ').stream()
+        comments = Processor(self.test_before_and_after_empty.__name__)\
+            .process_lines(r'  /**/  ').stream()
         i = comments.read()
         self.assertEqual(next_content(i), r'  ')
         self.assertEqual(next_content(i), r'  ')
