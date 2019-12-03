@@ -14,7 +14,6 @@ class Processor(LineProcessor):
     MACRO_START = r'macro-start'
     LINE_CONT = r'line-cont'
     CONTENT = r'content'
-    COMMENT = r'comment'
     NEWLINE = r'newline'
 
     def __init__(self, source):
@@ -121,11 +120,9 @@ class Processor(LineProcessor):
             return
         is_comment = self.in_ml_comment | self.in_comment
         print('[{}:{}#{}] "{}" comment?: {}'.format(self.stream_data.name, self.line_num, pos, capture, is_comment))
-        if is_comment:
-            self.stream_data.append(self.line_num, pos, {'type': Processor.COMMENT, 'content': capture})
-        else:
-            self.stream_data.append(self.line_num, pos, {'type': Processor.CONTENT, 'content': capture})
+        self.stream_data.append(self.line_num, pos, {'type': Processor.CONTENT, 'comment': is_comment, 'content': capture})
 
     def emit_marker(self, pos, marker):
-        print('[{}:{}#{}] {}'.format(self.stream_data.name, self.line_num, pos, marker))
-        self.stream_data.append(self.line_num, pos, {'type': marker})
+        is_comment = self.in_ml_comment | self.in_comment
+        print('[{}:{}#{}] {} comment?: {}'.format(self.stream_data.name, self.line_num, pos, marker, is_comment))
+        self.stream_data.append(self.line_num, pos, {'type': marker, 'comment': is_comment})
