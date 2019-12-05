@@ -1,3 +1,4 @@
+import subprocess
 from setuptools import setup, find_packages
 
 
@@ -5,9 +6,32 @@ DESCRIPTION = 'A python CLI and library to extract \
 meta-data from Cxx style languages.'
 
 
+def read_git_version():
+    proc = subprocess.Popen(
+        ['git', 'rev-parse', '--short', 'HEAD'],
+        stdout=subprocess.PIPE)
+    buffer = []
+    while True:
+        line = proc.stdout.readline()
+        if not line:
+            break
+        buffer.append(line.rstrip())
+    return ''.join(buffer)
+
+
+def optional_git_version():
+    try:
+        git_version = read_git_version()
+        if git_version:
+            return "-" + git_version
+    except:
+        pass
+    return ""
+
+
 setup(
     name="cxmeta",
-    version="0.1",
+    version="0.1" + optional_git_version(),
     packages=find_packages(),
     scripts=['cxmeta/tools/cli.py'],
     install_requires=[

@@ -3,17 +3,19 @@ from cxmeta.pipeline.source_file import FileProcessor
 
 
 class Module(object):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, path):
+        self.name = module_name(path)
+        self.path = path
 
-    def each_file(self, path):
-        print("# [{}] processing path {}".format(self.name, path))
+    def process(self, debug=False):
+        if debug:
+            print("# [{}] processing path {}".format(self.name, self.path))
         # Look for a header / README.md
-        for filename in os.listdir(path):
+        for filename in os.listdir(self.path):
             _, ext = os.path.splitext(filename)
             if ext in ('.c', '.h'):
-                file_proc = FileProcessor(self, os.path.join(path, filename))
-                file_proc.process()
+                file_proc = FileProcessor(self, os.path.join(self.path, filename))
+                file_proc.process(debug)
 
 
 # Convert the directory name of the path into the modulename
