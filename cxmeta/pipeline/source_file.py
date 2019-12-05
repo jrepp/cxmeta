@@ -9,8 +9,9 @@ class FileProcessor(object):
         self.out = sys.stdout
         self.filename = filename
 
-    def process(self):
-        print("[{}] processing {}".format(self.module.name, self.filename))
+    def process(self, debug=False):
+        if debug:
+            print("[{}] processing {}".format(self.module.name, self.filename))
         with open(self.filename, 'r') as f:
             proc = Processor(self.filename)
             map(proc.process_line, f.readlines())

@@ -18,4 +18,7 @@ statements and expressions into a stream which can extract metadata.
 Additional meta-data rules at the end of the pipeline allow for rST authoring to make it simple for the source code author to export 
 their types into simple and attractive documentation.
 
-Common styles between rST and Markdown: https://gist.github.com/dupuy/1855764
+Additional Reading:
+
+* [Commonalities between rST and Markdown](https://gist.github.com/dupuy/1855764)
+* [Mastering Markdown](https://guides.github.com/features/mastering-markdown/)
