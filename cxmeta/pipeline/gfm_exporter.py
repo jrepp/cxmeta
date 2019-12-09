@@ -8,7 +8,7 @@ def make_md_link(name, link):
     return '[{}]({})'.format(name, link)
 
 
-class GhmStyle(object):
+class GfmStyle(object):
     """
     Abstract style renderer
     """
@@ -52,7 +52,7 @@ class GhmStyle(object):
         return ''.join(export)
 
 
-class GhmExporter(object):
+class GfmExporter(object):
     def __init__(self, project):
         self.project = project
         self.output = sys.stdout
@@ -62,7 +62,7 @@ class GhmExporter(object):
         self.output_file_path = None  # computed path to current output file
         self.newline = project.newline
         assert(self.newline is not None)
-        self.style = GhmStyle(self.project)
+        self.style = GfmStyle(self.project)
 
     def export_module(self, module):
         if self.debug_export:
