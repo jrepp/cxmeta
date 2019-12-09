@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 PYTHON=`which python3`
 SELF_PATH=$(dirname $0)
-pushd $SELF_PATH/..
+
+pushd $SELF_PATH/.. > /dev/null
 ABS_CXM_PATH=$(echo $(pwd)/$line)
-popd
+popd > /dev/null
+
 # echo $ABS_CXM_PATH
 export PYTHONPATH=$PYTHONPATH:$ABS_CXM_PATH
 $PYTHON -m cxmeta.tools.cli $*
