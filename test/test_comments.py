@@ -38,7 +38,7 @@ def next_content(i):
 class TestComments(unittest.TestCase):
     def setUp(self) -> None:
         self.project = Project()
-        self.module = Module('test-comments', InputDirectory('.'))
+        self.module = Module(self.project, InputDirectory('.'))
 
     def test_empty(self):
         comments = CxxProcessor(self.project,

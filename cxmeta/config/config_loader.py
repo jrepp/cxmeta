@@ -21,7 +21,10 @@ valid_settings = {
     # File handling settings
     #
     'separate_source_files':
-        'Separate source files into different outputs'
+        'Separate source files into different outputs',
+
+    'include_paths':
+        'Whitelist of paths while processing modules'
 }
 
 

@@ -19,7 +19,7 @@ macro_cont_stmt = r"""
 class TestMacros(unittest.TestCase):
     def setUp(self) -> None:
         self.project = Project()
-        self.module = Module('test', InputDirectory('.'))
+        self.module = Module(self.project, InputDirectory('.'))
 
     def test_macro(self):
         # Not technically part of C or a statement but important to parse
