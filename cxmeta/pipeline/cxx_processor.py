@@ -145,7 +145,11 @@ class CxxProcessor(Processor):
         is_comment = self.in_ml_comment | self.in_comment
         if self.debug_atoms:
             print('[Content] [{}:{}#{}] "{}" comment?: {}'.format(
-                self.stream_data.name, self.line_num, pos, capture, is_comment))
+                self.stream_data.name,
+                self.line_num,
+                pos,
+                capture,
+                is_comment))
         self.stream_data.append(Atom(
             self.line_num,
             pos,
@@ -155,8 +159,11 @@ class CxxProcessor(Processor):
 
     def emit_macro(self, pos, capture):
         if self.debug_atoms:
-            print('[Macro] [{}:{}#{}] "{}" comment?: {}'.format(
-                self.stream_data.name, self.line_num, pos, capture, is_comment))
+            print('[Macro] [{}:{}#{}] "{}"'.format(
+                self.stream_data.name,
+                self.line_num,
+                pos,
+                capture))
         self.stream_data.append(Atom(
             self.line_num,
             pos,
@@ -167,10 +174,12 @@ class CxxProcessor(Processor):
         is_comment = self.in_ml_comment | self.in_comment
         if self.debug_atoms:
             print('[Marker] [{}:{}#{}] {} comment?: {}'.format(
-                self.stream_data.name, self.line_num, pos, marker, is_comment))
+                self.stream_data.name,
+                self.line_num,
+                pos,
+                marker,
+                is_comment))
         self.stream_data.append(Atom(
             self.line_num,
             pos,
             {'type': marker, 'is_comment': is_comment}))
-
-

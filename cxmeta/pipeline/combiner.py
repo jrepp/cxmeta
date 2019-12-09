@@ -32,11 +32,13 @@ class Combiner(Processor):
         self.in_block = False
         self.newline = '\n'
         self.debug_chunks = project.config.get('debug_chunks', False)
-        self.directive_expr = re.compile(r'\.\.(?P<name>\w+)\:\:\s+?(?P<value>\w+)')
+        self.directive_expr = re.compile(
+            r'\.\.(?P<name>\w+)\:\:\s+?(?P<value>\w+)')
         self.project_relative_path = full_to_relative(module, source.full_path)
 
     def __str__(self):
-        return '[Combiner] <full_path: {}, chunks: {}>'.format(self.source.full_path, len(self.stream_data.content))
+        return '[Combiner] <full_path: {}, chunks: {}>'.format(
+            self.source.full_path, len(self.stream_data.content))
 
     def process(self):
         self.proc.process()
@@ -133,4 +135,3 @@ class Combiner(Processor):
 
     def stream(self):
         return self.stream_data
-

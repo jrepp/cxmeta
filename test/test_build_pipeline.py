@@ -2,8 +2,6 @@ import unittest
 import yaml
 
 from cxmeta.pipeline.builder import Builder
-from cxmeta.config.project import Project
-from cxmeta.pipeline.stream import InputBuffer
 
 
 test_config = """
@@ -38,7 +36,9 @@ class TestBuildPipeline(unittest.TestCase):
         def does_raise():
             doc = yaml.safe_load(test_invalid_config)
             Builder().build_from_config(doc)
-        #self.assertRaises(ModuleNotFoundError, does_raise)
+        # self.assertRaises(ModuleNotFoundError, does_raise)
+        # TODO: implement this test again
+        pass
 
 
 if __name__ == '__main__':

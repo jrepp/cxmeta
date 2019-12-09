@@ -27,14 +27,16 @@ class TestMacros(unittest.TestCase):
         proc = CxxProcessor(self.project,
                             self.module,
                             InputBuffer(
-                                self.test_macro.__name__, macro_stmt))
+                                self.test_macro.__name__,
+                                macro_stmt))
         proc.process()
 
     def test_macro_cont(self):
         proc = CxxProcessor(self.project,
                             self.module,
                             InputBuffer(
-                                self.test_macro_cont.__name__, macro_cont_stmt))
+                                self.test_macro_cont.__name__,
+                                macro_cont_stmt))
         proc.process()
 
 

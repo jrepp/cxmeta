@@ -2,7 +2,8 @@ import unittest
 
 from cxmeta.pipeline.source_module import module_name, Module
 from cxmeta.pipeline.combiner import Combiner
-from cxmeta.pipeline.stream import Stream, Processor, Atom, InputDirectory, InputFile, OutputFile
+from cxmeta.pipeline.stream import \
+    Stream, Processor, Atom, InputDirectory, InputFile
 from cxmeta.config.project import Project
 
 
@@ -46,7 +47,6 @@ class TestBasics(unittest.TestCase):
         self.assertEqual(module.project, project)
         self.assertEqual(module.debug_files, True)
         module.process()
-
 
     def test_source_file(self):
         project = Project()

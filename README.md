@@ -18,7 +18,28 @@ statements and expressions into a stream which can extract metadata.
 Additional meta-data rules at the end of the pipeline allow for rST authoring to make it simple for the source code author to export 
 their types into simple and attractive documentation.
 
+# Contributing
+
+Pull requests welcome!
+
+Make sure you run lint (./run_lint.sh)
+
+    vim, set makeprg=./run_link.sh, :make
+
+    Or figure out how to integrate in your IDE such as PyCharm!
+
+Make sure you pass existing tests
+
+    tox
+
+Add tests for new functionality
+
+
+# Additional Info
+
 Additional Reading:
 
 * [Commonalities between rST and Markdown](https://gist.github.com/dupuy/1855764)
 * [Mastering Markdown](https://guides.github.com/features/mastering-markdown/)
+
+

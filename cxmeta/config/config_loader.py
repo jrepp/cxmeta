@@ -40,7 +40,8 @@ class ConfigLoader(object):
     def load(self):
         self.doc = self.search_path(self.full_path)
         if self.doc is None:
-            log.warning('no config file .cxmeta found in {}'.format(self.full_path))
+            log.warning('no config file .cxmeta found in {}'.format(
+                self.full_path))
             self.doc = self.default_config()
         return self.doc
 
@@ -62,5 +63,5 @@ class ConfigLoader(object):
         else:
             # recurse up one directory
             parent = os.path.dirname(path)
+            self.search_path(parent, depth+1)
         return None
-

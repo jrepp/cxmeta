@@ -11,7 +11,7 @@ import logging
 
 from cxmeta.pipeline.cxx_processor import CxxProcessor
 from cxmeta.pipeline.source_module import Module
-from cxmeta.pipeline.stream import Line, InputBuffer, InputDirectory, Atom
+from cxmeta.pipeline.stream import InputBuffer, InputDirectory, Atom
 from cxmeta.config.project import Project
 
 # Use as many * characters as you want
@@ -53,7 +53,8 @@ class TestComments(unittest.TestCase):
     def test_before_and_after_empty(self):
         comments = CxxProcessor(self.project,
                                 self.module,
-                                InputBuffer(self.test_before_and_after_empty.__name__,
+                                InputBuffer(
+                                    self.test_before_and_after_empty.__name__,
                                     r'  /**/  '))
         comments.process()
         i = comments.stream().read()
@@ -74,7 +75,6 @@ class TestComments(unittest.TestCase):
 
     def test_compact(self):
         compact_tag = r'/*..class:: type*/'
-        line = Line(1, compact_tag)
         comments = CxxProcessor(self.project,
                                 self.module,
                                 InputBuffer('compact_tag', compact_tag))
