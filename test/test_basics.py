@@ -1,6 +1,7 @@
 import unittest
 
 from cxmeta.pipeline.source_module import module_name, Module
+from cxmeta.pipeline.combiner import Combiner
 from cxmeta.pipeline.stream import Stream, Processor, Atom, InputDirectory, InputFile, OutputFile
 from cxmeta.config.project import Project
 
@@ -40,19 +41,19 @@ class TestBasics(unittest.TestCase):
 
     def test_module(self):
         project = Project()
-        project.debug = True
+        project.config['debug_files'] = True
         module = Module(project, FakeInputDirectory('/'))
         self.assertEqual(module.project, project)
-        self.assertEqual(module.debug, True)
+        self.assertEqual(module.debug_files, True)
         module.process()
 
 
     def test_source_file(self):
         project = Project()
         module = Module(project, FakeInputDirectory('/'))
-        sf = SourceFile(project, module, FakeInputFile('foo.c'))
-        self.assertEqual(sf.source.full_path, 'foo.c')
-        self.assertEqual(project.name, sf.project.name)
+        combine = Combiner(project, module, FakeInputFile('foo.c'))
+        self.assertEqual(combine.source.full_path, 'foo.c')
+        self.assertEqual(project.name, combine.project.name)
 
     def test_stream(self):
         s = Stream('source-name')

@@ -72,7 +72,7 @@ void nested_func() {
 class TestStatements(unittest.TestCase):
     def setUp(self) -> None:
         self.project = Project(config={'debug': False})
-        self.module = Module('.', InputDirectory('.'))
+        self.module = Module(self.project, InputDirectory('.'))
 
     def test_file_level(self):
         proc = CxxProcessor(self.project,

@@ -1,2 +1,4 @@
 docopt
 docutils
+pyaml
+pytest
