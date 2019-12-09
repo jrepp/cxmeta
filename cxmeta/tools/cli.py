@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 import os
+import logging
 from docopt import docopt
-from cxmeta.pipeline.source_module import Module, module_name
-from cxmeta.pipeline.source_file import FileProcessor
+from cxmeta.pipeline.builder import Builder
 from cxmeta.config.config_loader import ConfigLoader
+
 
 USAGE = """
 Usage:
@@ -17,8 +18,8 @@ Usage:
 
 
 def main():
+    logging.basicConfig(filename=None, level=logging.DEBUG)
     args = docopt(USAGE)
-    self_path = os.path.dirname(__file__)
     debug = args.get('--debug', True)
     if debug:
         for k, v in args.items():
@@ -27,14 +28,15 @@ def main():
     source_path = args['<source_file_or_dir>']
     full_path = os.path.abspath(source_path)
 
+    # Load the project config, combine with arguments
     config = ConfigLoader(full_path).doc
+    config.setdefault('settings', dict()).setdefault('debug', debug)
+    print("project_config: {}".format(config))
 
-    print("config: {}".format(config))
+    # Build the project object
+    project = Builder().build_from_config(config)
+    print(project.process())
 
-    if os.path.isdir(full_path):
-        Module(full_path).process(debug=debug)
-    elif os.path.isfile(full_path):
-        FileProcessor(full_path).process()
 
 if __name__ == '__main__':
     main()

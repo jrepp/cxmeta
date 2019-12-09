@@ -1,21 +1,38 @@
 import os
-from cxmeta.pipeline.source_file import FileProcessor
+
+from cxmeta.pipeline.stream import Processor, InputFile, InputDirectory
+from cxmeta.pipeline.combiner import Combiner
 
 
-class Module(object):
-    def __init__(self, path):
-        self.name = module_name(path)
-        self.path = path
+class Module(Processor):
+    def __init__(self, project, source):
+        Processor.__init__(self, project, source, InputDirectory, InputFile)
+        self.project = project
+        self.source = source
+        self.name = module_name(source.full_path)
+        self.debug_files = project.config.get('debug_files')
+        self.files = list()
 
-    def process(self, debug=False):
-        if debug:
-            print("# [{}] processing path {}".format(self.name, self.path))
+    def __str__(self):
+        return '[Module] <name: {}, full_path: {}'.format(
+            self.name, self.source.full_path)
+
+    def process(self):
+        if self.debug_files:
+            print("# Processing module {}".format(self.name))
         # Look for a header / README.md
-        for filename in os.listdir(self.path):
-            _, ext = os.path.splitext(filename)
+        for input_file in self.source.read():
+            _, ext = os.path.splitext(input_file.full_path)
             if ext in ('.c', '.h'):
-                file_proc = FileProcessor(self, os.path.join(self.path, filename))
-                file_proc.process(debug)
+                if self.debug_files:
+                    print("## [{}] processing path {}".format(self.name, input_file.full_path))
+                file_proc = Combiner(self.project, self, input_file)
+                file_proc.process()
+                self.files.append(file_proc)
+            else:
+                if self.debug_files:
+                    print("## [{}] ignoring path {}".format(self.name, input_file.full_path))
+        return self
 
 
 # Convert the directory name of the path into the modulename

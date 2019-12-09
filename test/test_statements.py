@@ -1,6 +1,10 @@
 import unittest
 
-from cxmeta.pipeline.cxx_processor import Processor
+from cxmeta.pipeline.source_module import Module
+from cxmeta.pipeline.cxx_processor import CxxProcessor
+from cxmeta.pipeline.stream import Line, InputBuffer, InputDirectory
+from cxmeta.config.project import Project
+
 
 static_statment = r"""
 
@@ -66,33 +70,51 @@ void nested_func() {
 
 
 class TestStatements(unittest.TestCase):
+    def setUp(self) -> None:
+        self.project = Project(config={'debug': False})
+        self.module = Module('.', InputDirectory('.'))
+
     def test_file_level(self):
-        proc = Processor(self.test_file_level.__name__)
-        proc.process_lines(static_statment)
+        proc = CxxProcessor(self.project,
+                            self.module,
+                            InputBuffer(self.test_file_level.__name__, static_statment))
+        proc.process()
 
     def test_enum(self):
-        proc = Processor(self.test_enum.__name__)
-        proc.process_lines(enum_statement)
+        proc = CxxProcessor(self.project,
+                            self.module,
+                            InputBuffer(self.test_enum.__name__, enum_statement))
+        proc.process()
 
     def test_struct(self):
-        proc = Processor(self.test_struct.__name__)
-        proc.process_lines(struct_statement)
+        proc = CxxProcessor(self.project,
+                            self.module,
+                            InputBuffer(self.test_struct.__name__, struct_statement))
+        proc.process()
 
     def test_function_decl(self):
-        proc = Processor(self.test_function_decl.__name__)
-        proc.process_lines(func_decl)
+        proc = CxxProcessor(self.project,
+                            self.module,
+                            InputBuffer(self.test_function_decl.__name__, func_decl))
+        proc.process()
 
     def test_function_defn(self):
-        proc = Processor(self.test_function_defn.__name__)
-        proc.process_lines(func_defn)
+        proc = CxxProcessor(self.project,
+                            self.module,
+                            InputBuffer(self.test_function_defn.__name__, func_defn))
+        proc.process()
 
     def test_function_defn_egyptian(self):
-        proc = Processor(self.test_function_defn_egyptian.__name__)
-        proc.process_lines(func_defn_egyptian)
+        proc = CxxProcessor(self.project,
+                            self.module,
+                            InputBuffer(self.test_function_defn_egyptian.__name__, func_defn_egyptian))
+        proc.process()
 
     def test_function_nested(self):
-        proc = Processor(self.test_function_nested.__name__)
-        proc.process_lines(func_nested)
+        proc = CxxProcessor(self.project,
+                            self.module,
+                            InputBuffer(self.test_function_nested.__name__, func_nested))
+        proc.process()
 
 
 if __name__ == '__main__':
