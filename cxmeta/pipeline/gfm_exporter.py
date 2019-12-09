@@ -8,6 +8,13 @@ def make_md_link(name, link):
     return '[{}]({})'.format(name, link)
 
 
+def copy_header_to_output(header_file_path, output_file):
+    copy_size = 8192
+    with open(header_file_path, 'r') as input_file:
+        byte_data = input_file.read(copy_size)
+        output_file.write(byte_data)
+
+
 class GfmStyle(object):
     """
     Abstract style renderer
@@ -66,7 +73,7 @@ class GfmExporter(object):
 
     def export_module(self, module):
         if self.debug_export:
-            print("exporting module: {}".format(module))
+            print("[export] exporting module: {}".format(module))
 
         # Create the output directories
         os.makedirs(self.output_path, exist_ok=True)
@@ -77,7 +84,17 @@ class GfmExporter(object):
 
         with open(self.output_file_path, 'w+') as output_file:
             if self.debug_export:
-                print("exporting module to: {}".format(self.output_file_path))
+                print("[export] exporting module to: {}".format(
+                    self.output_file_path))
+
+            project_header = self.project.config.get('project_header')
+            if project_header:
+                header_full_path = os.path.join(
+                    module.source.full_path, project_header)
+                if self.debug_export:
+                    print("[export] copying in project_header: {}".format(
+                        header_full_path))
+                copy_header_to_output(header_full_path, output_file)
 
             output_file.write(self.style.start_module(module))
 
@@ -90,7 +107,7 @@ class GfmExporter(object):
     def export_source_file(self, module_output_file, module, source_file):
         if not self.project.config.get('separate_source_files'):
             if self.debug_export:
-                print("exporting source file: {} to module".format(
+                print("[export] exporting source file: {} to module".format(
                     source_file))
             self.export_source_file_inner(
                 module_output_file, module, source_file)
@@ -99,7 +116,7 @@ class GfmExporter(object):
             file_name, _ = os.path.splitext(source_file.project_relative_path)
             file_path = os.path.join(self.output_path, file_name + '.md')
             if self.debug_export:
-                print("exporting source file: {} to file {}".format(
+                print("[export] exporting source file: {} to file {}".format(
                     source_file, file_path))
             with open(file_path, 'w+') as output_file:
                 self.export_source_file_inner(output_file, module, source_file)
@@ -112,6 +129,6 @@ class GfmExporter(object):
 
     def export_chunk(self, output_file, module, source_file, chunk):
         if self.debug_export:
-            print("exporting chunk: {} to file: {}".format(
+            print("[export] exporting chunk: {} to file: {}".format(
                 chunk, self.output_file_path))
         output_file.write(self.style.chunk(module, source_file, chunk))

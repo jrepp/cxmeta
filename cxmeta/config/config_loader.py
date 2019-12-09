@@ -7,6 +7,10 @@ from cxmeta.pipeline.source_module import module_name
 log = logging.getLogger('ConfigLoader')
 
 valid_settings = {
+    # General documentation settings
+    'project_header': 'Relative path to a file to \
+include as the project header',
+
     #
     # Debug settings
     #

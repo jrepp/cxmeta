@@ -31,6 +31,7 @@ class Module(Processor):
                 if self.debug_files:
                     print("# Allowed sub-module {}".format(sub_module))
                 sub_module.process()
+                self.files.extend(sub_module.files)
                 continue
 
             _, ext = os.path.splitext(input_file.full_path)
