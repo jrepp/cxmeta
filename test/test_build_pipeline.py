@@ -13,7 +13,7 @@ main-page: foo.md
 module-index: index.md
 parser-combiner: cxx
 ingest-meta: rst
-export: ghm
+export: gfm
 """
 
 test_invalid_config = """

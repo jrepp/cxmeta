@@ -1,5 +1,5 @@
 import os
-from cxmeta.pipeline.ghm_exporter import GhmExporter
+from cxmeta.pipeline.gfm_exporter import GfmExporter
 from cxmeta.pipeline.source_module import Module
 from cxmeta.pipeline.stream import InputDirectory, InputFile
 from . import random_name
@@ -56,5 +56,5 @@ class Project(object):
         return module
 
     def export(self, module):
-        exporter = GhmExporter(self)
+        exporter = GfmExporter(self)
         exporter.export_module(module)
