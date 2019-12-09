@@ -23,9 +23,11 @@ class Module(Processor):
             print("# Processing module {}".format(self.name))
         # Look for a header / README.md
         for input_file in self.source.read():
-            if os.path.isdir(input_file.full_path) and self.allowed_sub_path(input_file.full_path):
+            if os.path.isdir(input_file.full_path) and \
+                    self.allowed_sub_path(input_file.full_path):
                 # Create a new module to handle the sub-module
-                sub_module = Module(self.project, InputDirectory(input_file.full_path))
+                sub_module = Module(self.project,
+                                    InputDirectory(input_file.full_path))
                 if self.debug_files:
                     print("# Allowed sub-module {}".format(sub_module))
                 sub_module.process()
@@ -34,21 +36,25 @@ class Module(Processor):
             _, ext = os.path.splitext(input_file.full_path)
             if ext in ('.c', '.h'):
                 if self.debug_files:
-                    print("## [{}] processing path {}".format(self.name, input_file.full_path))
+                    print("## [{}] processing path {}".format(
+                        self.name, input_file.full_path))
                 file_proc = Combiner(self.project, self, input_file)
                 file_proc.process()
                 self.files.append(file_proc)
             else:
                 if self.debug_files:
-                    print("## [{}] ignoring path {}".format(self.name, input_file.full_path))
+                    print("## [{}] ignoring path {}".format(
+                        self.name, input_file.full_path))
         return self
 
     def allowed_sub_path(self, full_path):
-        # TODO: assume input_file is a child of module path - this could be a mistake
+        # TODO: assume input_file is a child of module path
+        #  this could be a mistake
         for include in self.include_paths:
             if full_path.endswith(include):
                 return True
         return False
+
 
 # Convert the directory name of the path into the module name
 def module_name(source_path):

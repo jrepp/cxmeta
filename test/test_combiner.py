@@ -53,7 +53,9 @@ class TestCombiner(unittest.TestCase):
     def test_combine(self):
         combiner = Combiner(self.project,
                             self.module,
-                            InputBuffer(self.test_combine.__name__, simple_combine))
+                            InputBuffer(
+                                self.test_combine.__name__,
+                                simple_combine))
         combiner.process()
         self.assertEqual(len(combiner.stream_data.content), 1)
         for chunk in combiner.stream().read():
@@ -64,7 +66,9 @@ class TestCombiner(unittest.TestCase):
         # self.project.config['debug_chunks'] = True
         combiner = Combiner(self.project,
                             self.module,
-                            InputBuffer(self.test_combine_two.__name__, two_chunks))
+                            InputBuffer(
+                                self.test_combine_two.__name__,
+                                two_chunks))
         combiner.process()
         self.assertEqual(len(combiner.stream_data.content), 2)
         for chunk in combiner.stream().read():
@@ -81,7 +85,9 @@ class TestCombiner(unittest.TestCase):
         self.project.config['debug_matches'] = True
         combiner = Combiner(self.project,
                             self.module,
-                            InputBuffer(self.test_combine_three_styles.__name__, three_blocks))
+                            InputBuffer(
+                                self.test_combine_three_styles.__name__,
+                                three_blocks))
         combiner.process()
         self.assertEqual(len(combiner.stream_data.content), 3)
         for chunk in combiner.stream().read():

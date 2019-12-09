@@ -5,6 +5,7 @@ import docutils.frontend
 
 from cxmeta.pipeline.stream import Processor, Chunk
 
+
 # RST parsing tip by: https://stackoverflow.com/users/4973698/mbdevpl
 def parse_rst(text: str) -> docutils.nodes.document:
     parser = docutils.parsers.rst.Parser()
@@ -35,5 +36,3 @@ if __name__ == '__main__':
     doc = parse_rst('spam spam lovely spam')
     visitor = MyVisitor(doc)
     doc.walk(visitor)
-
-

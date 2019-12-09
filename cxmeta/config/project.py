@@ -33,7 +33,9 @@ class Project(object):
         self.full_path = config.get('full_path', '.')
         assert(self.full_path is not None)
         assert (os.path.exists(self.full_path))
-        self.output_path = config.get('output_path', os.path.join(self.full_path, '_output'))
+        self.output_path = config.get('output_path',
+                                      os.path.join(
+                                        self.full_path, '_output'))
         self.newline = config.get('newline', '\n')
         self.style = None
 

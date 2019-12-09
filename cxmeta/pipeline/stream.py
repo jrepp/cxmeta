@@ -118,7 +118,8 @@ class Chunk(object):
         self.class_name = None
 
     def __str__(self):
-        return "[Chunk] <line_num: {}, directives: {}, comments: {} bytes, stmt: {} bytes>".format(
+        return "[Chunk] \
+<line_num: {}, directives: {}, comments: {} bytes, stmt: {} bytes>".format(
             self.line_num, self.directives, len(self.comment), len(self.stmt))
 
 

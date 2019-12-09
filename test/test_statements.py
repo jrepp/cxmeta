@@ -2,7 +2,7 @@ import unittest
 
 from cxmeta.pipeline.source_module import Module
 from cxmeta.pipeline.cxx_processor import CxxProcessor
-from cxmeta.pipeline.stream import Line, InputBuffer, InputDirectory
+from cxmeta.pipeline.stream import InputBuffer, InputDirectory
 from cxmeta.config.project import Project
 
 
@@ -77,43 +77,57 @@ class TestStatements(unittest.TestCase):
     def test_file_level(self):
         proc = CxxProcessor(self.project,
                             self.module,
-                            InputBuffer(self.test_file_level.__name__, static_statment))
+                            InputBuffer(
+                                self.test_file_level.__name__,
+                                static_statment))
         proc.process()
 
     def test_enum(self):
         proc = CxxProcessor(self.project,
                             self.module,
-                            InputBuffer(self.test_enum.__name__, enum_statement))
+                            InputBuffer(
+                                self.test_enum.__name__,
+                                enum_statement))
         proc.process()
 
     def test_struct(self):
         proc = CxxProcessor(self.project,
                             self.module,
-                            InputBuffer(self.test_struct.__name__, struct_statement))
+                            InputBuffer(
+                                self.test_struct.__name__,
+                                struct_statement))
         proc.process()
 
     def test_function_decl(self):
         proc = CxxProcessor(self.project,
                             self.module,
-                            InputBuffer(self.test_function_decl.__name__, func_decl))
+                            InputBuffer(
+                                self.test_function_decl.__name__,
+                                func_decl))
         proc.process()
 
     def test_function_defn(self):
         proc = CxxProcessor(self.project,
                             self.module,
-                            InputBuffer(self.test_function_defn.__name__, func_defn))
+                            InputBuffer(
+                                self.test_function_defn.__name__,
+                                func_defn))
         proc.process()
 
     def test_function_defn_egyptian(self):
         proc = CxxProcessor(self.project,
                             self.module,
-                            InputBuffer(self.test_function_defn_egyptian.__name__, func_defn_egyptian))
+                            InputBuffer(
+                                self.test_function_defn_egyptian.__name__,
+                                func_defn_egyptian))
         proc.process()
 
     def test_function_nested(self):
         proc = CxxProcessor(self.project,
                             self.module,
-                            InputBuffer(self.test_function_nested.__name__, func_nested))
+                            InputBuffer(
+                                self.test_function_nested.__name__,
+                                func_nested))
         proc.process()
 
 

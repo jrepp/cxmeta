@@ -90,8 +90,10 @@ class GfmExporter(object):
     def export_source_file(self, module_output_file, module, source_file):
         if not self.project.config.get('separate_source_files'):
             if self.debug_export:
-                print("exporting source file: {} to module".format(source_file))
-            self.export_source_file_inner(module_output_file, module, source_file)
+                print("exporting source file: {} to module".format(
+                    source_file))
+            self.export_source_file_inner(
+                module_output_file, module, source_file)
         else:
             # Convert to a markdown file in the output directory
             file_name, _ = os.path.splitext(source_file.project_relative_path)
@@ -110,5 +112,6 @@ class GfmExporter(object):
 
     def export_chunk(self, output_file, module, source_file, chunk):
         if self.debug_export:
-            print("exporting chunk: {} to file: {}".format(chunk, self.output_file_path))
+            print("exporting chunk: {} to file: {}".format(
+                chunk, self.output_file_path))
         output_file.write(self.style.chunk(module, source_file, chunk))
