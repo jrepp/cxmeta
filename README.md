@@ -37,9 +37,7 @@ Add tests for new functionality
 
 # Additional Info
 
-Additional Reading:
-
+* [GFM emojii](https://gist.github.com/rxaviers/7360908)
 * [Commonalities between rST and Markdown](https://gist.github.com/dupuy/1855764)
 * [Mastering Markdown](https://guides.github.com/features/mastering-markdown/)
-
 
