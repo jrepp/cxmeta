@@ -10,8 +10,8 @@ class Module(Processor):
         self.project = project
         self.source = source
         self.name = module_name(source.full_path)
-        self.debug_files = project.config.get('debug_files')
-        self.include_paths = project.config.get('include_paths')
+        self.debug_files = project.config.get('debug_files', False)
+        self.include_paths = project.config.get('include_paths', list())
         self.files = list()
 
     def __str__(self):
