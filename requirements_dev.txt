@@ -1,0 +1,5 @@
+-r requirements.txt
+grip
+autopep8
+pyflakes
+tox
