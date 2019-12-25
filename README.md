@@ -8,7 +8,7 @@ A python CLI and library to extract meta-data from Cxx style languages.
     pip install cxmeta
     cxmeta <directory or file>
 
-cxmeta will create an **_output** directory next to your source files with the generated markdown document
+`cxmeta` will create an **_output** directory next to your source files with the generated markdown document
 
 * TODO: document the .cxmeta file
 * TODO: document single vs multi-module files
@@ -18,7 +18,7 @@ cxmeta will create an **_output** directory next to your source files with the g
   * WARNING
   * Using different code stylers
 
-To test your output
+Using `grip` to test your GitHub flavored markdown:
 
     pip install grip
     cd _output
@@ -49,18 +49,17 @@ their types into simple and attractive documentation.
 
 Pull requests welcome!
 
-Make sure you run lint (./run_lint.sh)
+    pip install -r requirements_dev.txt
+
+Run lint (`./run_lint.sh`)
 
     vim, set makeprg=./run_link.sh, :make
 
-    Or figure out how to integrate in your IDE such as PyCharm!
+Try using PyCharm as an IDEA.
 
-Make sure you pass existing tests
+Check existing tests, add new ones:
 
     tox
-
-Add tests for new functionality
-
 
 ## Additional Info
 
