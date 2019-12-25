@@ -2,5 +2,7 @@ debug_exporter: true
 debug_files: true
 debug_chunks: true
 project_header: 'project_readme.md'
+output_file_name: 'README.md'
+publish_single_file: true
 include_paths: 
     - src

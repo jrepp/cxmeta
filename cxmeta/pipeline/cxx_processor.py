@@ -1,10 +1,34 @@
 import re
+from typing import List
 
-from cxmeta.pipeline.stream import Stream, Processor, InputFile, Atom, Chunk
-
+from cxmeta.pipeline.stream import Stream, Processor, InputFile, Atom, Chunk, Line
 
 # Expression to find all parsable tokens in a line of C++
-REGEXP = r'\(|\)|\{|\}|^#.*$|\\$|\;|(\/{2,})|(/\*{2,}/)|(/\*{1,})|(\*{1,}/)'
+TOKEN_REGEXP = re.compile(r'\(|\)|\{|\}|^#.*$|\\$|\;|(\/{2,})|(/\*{2,}/)|(/\*{1,})|(\*{1,}/)')
+
+
+# C identifier expression
+IDENT_REGEXP = re.compile(r'[A-Za-z][\w:]*')
+
+
+def is_cxx_type(content: str):
+    """Returns true for content that declares a type"""
+    return content in ('enum', 'struct', 'class', 'typedef')
+
+
+def is_cxx_identifier(content: str):
+    """Returns true for strings that are valid identifiers (e.g. function and type names)"""
+    m = IDENT_REGEXP.match(content)
+    return m is not None and m.end() == len(content)
+
+
+def tokenize_cxx_identifiers(content: str):
+    """Returns a list of valid CXX identifier tokens such as function names"""
+    tokens = list()
+    matches = IDENT_REGEXP.finditer(content)
+    for i, match in enumerate(matches, start=1):
+        tokens.append(match.group())
+    return tokens
 
 
 class CxxProcessor(Processor):
@@ -28,16 +52,17 @@ class CxxProcessor(Processor):
     LINE_CONT = r'line_cont'
     CONTENT = r'content'
     NEWLINE = r'newline'
+    COMMENT_START = r'comment_start'
+    COMMENT_END = r'comment_end'
 
     def __init__(self, project, modules, source):
         Processor.__init__(self, project, source, InputFile, Chunk)
-        self.match = re.compile(REGEXP)
-        self.block_level = 0
-        self.in_decl = False
+        self.match = TOKEN_REGEXP
+        self.in_decl : bool = False
         self.stream_data = Stream(self.source)
         self.in_ml_comment = False
         self.in_comment = False
-        self.line_num = 0
+        self.line_num : int = 0
         self.debug_atoms = project.config.get('debug_atoms', False)
         self.debug_matches = project.config.get('debug_matches', False)
 
@@ -49,7 +74,7 @@ class CxxProcessor(Processor):
             self.each_line(line)
         return self
 
-    def each_line(self, line):
+    def each_line(self, line : Line):
         matches = []
         pos = 0
         while True:
@@ -67,7 +92,7 @@ class CxxProcessor(Processor):
     def evaluate_matches(self, line, matches):
         if len(matches) == 0:
             self.emit(0, line)
-            self.emit_marker(line, CxxProcessor.NEWLINE)
+            self.emit_marker(len(line), CxxProcessor.NEWLINE)
             return
 
         pos = 0
@@ -83,7 +108,6 @@ class CxxProcessor(Processor):
 
         for i, m in enumerate(matches):
             assert(m is not None)
-
             token = line[m.start():m.end()]
             in_comment = self.in_comment | self.in_ml_comment
             if self.debug_matches:
@@ -92,14 +116,10 @@ class CxxProcessor(Processor):
             if not in_comment:
                 if token == '{':
                     self.emit(pos, capture_including(m.end()))
-                    self.block_level += 1
-                    if self.block_level == 1:
-                        self.emit_marker(m.start(), CxxProcessor.BLOCK_START)
+                    self.emit_marker(m.start(), CxxProcessor.BLOCK_START)
                 elif token == '}':
                     self.emit(pos, capture_including(m.end()))
-                    self.block_level -= 1
-                    if self.block_level == 0:
-                        self.emit_marker(m.start(), CxxProcessor.BLOCK_END)
+                    self.emit_marker(m.start(), CxxProcessor.BLOCK_END)
                 elif token == ';':
                     self.emit(pos, capture_including(m.end()))
                     self.emit_marker(m.start(), CxxProcessor.STMT_END)
@@ -114,13 +134,20 @@ class CxxProcessor(Processor):
                     # emit content up to the comment marker
                     self.emit(pos, capture_upto(m.start()))
                     self.in_ml_comment = True
+                    self.emit_marker(pos, CxxProcessor.COMMENT_START)
+                    # special case for /**/ (there is also a pattern match for this case)
+                    if token.endswith(r'*/'):
+                        self.in_ml_comment = False
+                        self.emit_marker(m.end(), CxxProcessor.COMMENT_END)
                 elif token.startswith('//'):
                     self.emit(pos, capture_upto(m.start()))
                     self.in_comment = True
+                    self.emit_marker(pos, CxxProcessor.COMMENT_START)
             elif token.endswith('*/'):
                 assert (self.in_ml_comment is True)
                 self.emit(pos, capture_upto(m.start()))
                 self.in_ml_comment = False
+                self.emit_marker(pos, CxxProcessor.COMMENT_END)
             elif token == '\\':  # only matches at end of line
                 self.emit(pos, capture_including(m.end()))
                 self.emit_marker(m.start(), CxxProcessor.LINE_CONT)
@@ -137,9 +164,11 @@ class CxxProcessor(Processor):
         self.emit_marker(pos + len(capture), CxxProcessor.NEWLINE)
 
         # line level comments always end when the line is finished
-        self.in_comment = False
+        if self.in_comment and not self.in_ml_comment:
+            self.in_comment = False
+            self.emit_marker(pos + len(capture), CxxProcessor.COMMENT_END)
 
-    def emit(self, pos, capture):
+    def emit(self, pos: int, capture: int):
         if not capture:
             return
         is_comment = self.in_ml_comment | self.in_comment
@@ -150,12 +179,11 @@ class CxxProcessor(Processor):
                 pos,
                 capture,
                 is_comment))
-        self.stream_data.append(Atom(
-            self.line_num,
-            pos,
-            {r'type': CxxProcessor.CONTENT,
-             r'is_comment': is_comment,
-             r'content': capture}))
+        data = {
+            r'type': CxxProcessor.CONTENT,
+            r'value': capture
+        }
+        self.stream_data.append(Atom(self.line_num, pos, data))
 
     def emit_macro(self, pos, capture):
         if self.debug_atoms:
@@ -168,7 +196,7 @@ class CxxProcessor(Processor):
             self.line_num,
             pos,
             {r'type': CxxProcessor.MACRO,
-             r'content': capture}))
+             r'value': capture}))
 
     def emit_marker(self, pos, marker):
         is_comment = self.in_ml_comment | self.in_comment
@@ -182,4 +210,4 @@ class CxxProcessor(Processor):
         self.stream_data.append(Atom(
             self.line_num,
             pos,
-            {'type': marker, 'is_comment': is_comment}))
+            {'type': marker}))

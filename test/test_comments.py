@@ -27,10 +27,10 @@ multiline_function_c_style = r"""
 """
 
 
-def next_content(i):
+def next_value(i):
     while True:
         atom = next(i)
-        content = atom.data.get('content')
+        content = atom.data.get('value')
         if content:
             return content
 
@@ -51,6 +51,8 @@ class TestComments(unittest.TestCase):
         self.assertEqual(atom.data['type'], 'newline')
 
     def test_before_and_after_empty(self):
+        self.project.config['debug_atoms'] = True
+        self.project.config['debug_matches'] = True
         comments = CxxProcessor(self.project,
                                 self.module,
                                 InputBuffer(
@@ -58,8 +60,8 @@ class TestComments(unittest.TestCase):
                                     r'  /**/  '))
         comments.process()
         i = comments.stream().read()
-        self.assertEqual(next_content(i), r'  ')
-        self.assertEqual(next_content(i), r'  ')
+        self.assertEqual(next_value(i), r'  ')
+        self.assertEqual(next_value(i), r'  ')
 
     def test_multi_line_embedded(self):
         proc = CxxProcessor(self.project,
@@ -68,10 +70,10 @@ class TestComments(unittest.TestCase):
                                         multiline_function_c_style))
         comments = proc.process().stream()
         i = comments.read()
-        self.assertEqual(next_content(i), ' ..class:: mxfunction')
-        self.assertEqual(next_content(i), ' *')
-        self.assertEqual(next_content(i), ' *  //')
-        self.assertEqual(next_content(i), ' embedded string comment')
+        self.assertEqual(next_value(i), ' ..class:: mxfunction')
+        self.assertEqual(next_value(i), ' *')
+        self.assertEqual(next_value(i), ' *  //')
+        self.assertEqual(next_value(i), ' embedded string comment')
 
     def test_compact(self):
         compact_tag = r'/*..class:: type*/'
@@ -79,7 +81,7 @@ class TestComments(unittest.TestCase):
                                 self.module,
                                 InputBuffer('compact_tag', compact_tag))
         stream = comments.process().stream()
-        first = next_content(stream.read())
+        first = next_value(stream.read())
         self.assertEqual(first, r'..class:: type')
 
     def test_two_lines(self):
@@ -91,8 +93,8 @@ class TestComments(unittest.TestCase):
                                 InputBuffer('two_lines', two_lines))
         stream = comments.process().stream()
         i = stream.read()
-        self.assertEqual(next_content(i), ' blah')
-        self.assertEqual(next_content(i), ' blah2')
+        self.assertEqual(next_value(i), ' blah')
+        self.assertEqual(next_value(i), ' blah2')
 
 
 if __name__ == '__main__':

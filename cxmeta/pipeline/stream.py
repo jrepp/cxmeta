@@ -109,18 +109,21 @@ class Atom(object):
 
 
 class Chunk(object):
+    """
+    Represents a final chunk to be rendered
+    """
     def __init__(self):
-        self.comment = None
-        self.stmt = None
-        self.final = None
+        self.comments = list()
+        self.statements = list()
+        self.types = list()
+        self.names = list()
         self.directives = dict()
         self.line_num = 0
-        self.class_name = None
 
     def __str__(self):
         return "[Chunk] \
-<line_num: {}, directives: {}, comments: {} bytes, stmt: {} bytes>".format(
-            self.line_num, self.directives, len(self.comment), len(self.stmt))
+<line_num: {}, directives: {}, comments: {}, stmts: {}>".format(
+            self.line_num, self.directives, len(self.comments), len(self.statements))
 
 
 class Processor(object):
@@ -140,6 +143,9 @@ class Processor(object):
 
 
 class Stream(object):
+    """
+    An ordered list of items produced from the generator read()
+    """
     def __init__(self, name=None):
         self.name = name or random_name()
         self.content = list()

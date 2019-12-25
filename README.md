@@ -18,6 +18,13 @@ cxmeta will create an **_output** directory next to your source files with the g
   * WARNING
   * Using different code stylers
 
+To test your output
+    
+    pip install grip 
+    cd _output
+    grip
+
+
 ## Description
 
 This is not intended to be a full AST style exploration for static analysis. 
@@ -35,6 +42,8 @@ statements and expressions into a stream which can extract metadata.
 
 Additional meta-data rules at the end of the pipeline allow for rST authoring to make it simple for the source code author to export 
 their types into simple and attractive documentation.
+
+[Additional Details](DETAILS.md)
 
 ## Contributing
 
