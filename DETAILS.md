@@ -36,7 +36,7 @@ Transformed into `Atom` objects with content:
       {type: 'content', value: '};'}
       {type: 'block_end'}
     ]
-    
+
 #### Combiner Stage
 
 * Combines contiguous comment and statements

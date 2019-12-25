@@ -12,7 +12,7 @@ void foo_function_1(void);
  * foo function 2 has some more text
  *
  * * We had to add this because foo function 1 was too
- *    important 
+ *    important
  */
 void foo_function_2(void);
 

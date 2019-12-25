@@ -3,7 +3,7 @@
 
 // ..class:: cxm_page_header
 // # Some header
-// 
+//
 // This is the top of the header
 
 // ..class:: cxm_function
