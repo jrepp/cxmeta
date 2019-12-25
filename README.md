@@ -14,6 +14,9 @@ cxmeta will create an **_output** directory next to your source files with the g
 * TODO: document single vs multi-module files
 * TODO: work on meta-data extraction
 * TODO: work on styling extensions
+  * INFO breakout
+  * WARNING
+  * Using different code stylers
 
 ## Description
 
