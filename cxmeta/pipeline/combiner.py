@@ -2,30 +2,33 @@ import re
 import os
 from typing import AnyStr
 
-from .cxx_processor import CxxProcessor, is_cxx_identifier, is_cxx_type, tokenize_cxx_identifiers
+from .cxx_processor import (
+    CxxProcessor,
+    is_cxx_identifier,
+    is_cxx_type,
+    tokenize_cxx_identifiers,
+)
 from .stream import Stream, Chunk, InputFile, Processor, Atom
 
 
-RST_DIRECTIVE_REGEXP = re.compile(
-    r'\.\.(?P<name>\w+)\:\:\s+?(?P<value>\w+)')
+RST_DIRECTIVE_REGEXP = re.compile(r"\.\.(?P<name>\w+)\:\:\s+?(?P<value>\w+)")
 
 
-WHITESPACE_REGEXP = re.compile(r'^\s+?')
+WHITESPACE_REGEXP = re.compile(r"^\s+?")
 
 
 def full_to_relative(module, source_full_path):
     """Convert the source file, making it relative to the output"""
-    prefix = os.path.commonprefix([
-        module.source.full_path,
-        source_full_path])
+    prefix = os.path.commonprefix([module.source.full_path, source_full_path])
     # Strip the common prefix and path separator
-    return source_full_path[len(prefix) + 1:]
+    return source_full_path[len(prefix) + 1 :]
+
 
 def append_newline(lines, newline):
     """
     Convert consecutive newlines into a content-break (double newline)
     """
-    content_break = newline*2
+    content_break = newline * 2
     try:
         top = lines[-1]
         if top == newline:
@@ -50,21 +53,21 @@ class ChunkBuilder(object):
         self.names = list()
 
     def is_typedef(self):
-        return r'typedef' in self.types
+        return r"typedef" in self.types
 
     def is_macro(self):
-        return r'macro' in self.types
+        return r"macro" in self.types
 
     def is_function(self):
-        return r'function' in self.types
+        return r"function" in self.types
 
     def parse_rst_directive(self, value):
         match = RST_DIRECTIVE_REGEXP.match(value)
-        name = match.group('name')
-        value = match.group('value')
-        assert (match is not None)
-        assert (name is not None)
-        assert (value is not None)
+        name = match.group("name")
+        value = match.group("value")
+        assert match is not None
+        assert name is not None
+        assert value is not None
         self.directives[name] = value
 
     def parse_cxx_decls(self, value, in_expr_group):
@@ -79,15 +82,15 @@ class ChunkBuilder(object):
     def add_comment(self, value: AnyStr):
         if not self.comments:
             self.comment_justification = len(value) - len(value.lstrip())
-        self.comments.append(value[self.comment_justification:])
+        self.comments.append(value[self.comment_justification :])
 
     def add_statement(self, value):
         self.statements.append(value)
 
     def build(self):
         # Skip chunks that are only whitespace
-        comment_str = (''.join(self.comments)).strip()
-        statement_str = (''.join(self.statements)).strip()
+        comment_str = ("".join(self.comments)).strip()
+        statement_str = ("".join(self.statements)).strip()
         if not comment_str or not statement_str:
             return None
 
@@ -107,6 +110,7 @@ class Combiner(Processor):
 
     Tagged comment/statement blocks.
     """
+
     def __init__(self, project, module, source):
         Processor.__init__(self, project, source, InputFile, Chunk)
         self.proc = CxxProcessor(project, module, source)
@@ -114,14 +118,15 @@ class Combiner(Processor):
         self.builder = ChunkBuilder()
         self.in_comment = False
         self.in_expr_group = False
-        self.newline = '\n'
+        self.newline = "\n"
         self.block_level = 0
-        self.debug_chunks = project.config.get('debug_chunks', False)
+        self.debug_chunks = project.config.get("debug_chunks", False)
         self.project_relative_path = full_to_relative(module, source.full_path)
 
     def __str__(self):
-        return '[Combiner] <full_path: {}, chunks: {}>'.format(
-            self.source.full_path, len(self.stream_data.content))
+        return "[Combiner] <full_path: {}, chunks: {}>".format(
+            self.source.full_path, len(self.stream_data.content)
+        )
 
     def process(self):
         self.proc.process()
@@ -166,11 +171,11 @@ class Combiner(Processor):
         self.in_comment = False
 
     def _content_handler(self, atom: Atom):
-        value = atom.data[r'value']
+        value = atom.data[r"value"]
         if self.in_comment:
             # The first directive marks the chunk start
             stripped = value.strip()
-            if stripped.startswith('..'):
+            if stripped.startswith(".."):
                 self.builder.parse_rst_directive(stripped)
             else:
                 self.builder.add_comment(value)
@@ -182,7 +187,7 @@ class Combiner(Processor):
             self.builder.add_statement(value)
 
     def _default_handler(self, atom: Atom):
-        if type(atom.data) is dict and atom.data.get(r'content') is not None:
+        if type(atom.data) is dict and atom.data.get(r"content") is not None:
             self._content_handler(self, atom)
 
     def _newline_handler(self, _):
@@ -192,8 +197,8 @@ class Combiner(Processor):
             append_newline(self.builder.statements, self.newline)
 
     def _macro_handler(self, atom):
-        self.builder.types.append('macro')
-        self.builder.macros.append(atom.data.get('content'))
+        self.builder.types.append("macro")
+        self.builder.macros.append(atom.data.get("content"))
 
     def _expr_group_start(self, atom):
         self.in_expr_group = True
@@ -201,7 +206,7 @@ class Combiner(Processor):
     def _expr_group_end(self, atom):
         self.in_expr_group = False
         if not self.builder.is_macro() and not self.builder.is_function():
-            self.builder.types.append(r'function')
+            self.builder.types.append(r"function")
 
     def combine(self):
         handlers = {
@@ -218,7 +223,7 @@ class Combiner(Processor):
         }
         self.builder = ChunkBuilder()
         for atom in self.proc.stream().read():
-            handler = handlers.get(atom.data[r'type']) or self._default_handler
+            handler = handlers.get(atom.data[r"type"]) or self._default_handler
             handler(atom)
         self._finish_chunk()
 

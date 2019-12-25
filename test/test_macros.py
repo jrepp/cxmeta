@@ -19,26 +19,26 @@ macro_cont_stmt = r"""
 class TestMacros(unittest.TestCase):
     def setUp(self) -> None:
         self.project = Project()
-        self.module = Module(self.project, InputDirectory('.'))
+        self.module = Module(self.project, InputDirectory("."))
 
     def test_macro(self):
         # Not technically part of C or a statement but important to parse
         # for meta extraction process
-        proc = CxxProcessor(self.project,
-                            self.module,
-                            InputBuffer(
-                                self.test_macro.__name__,
-                                macro_stmt))
+        proc = CxxProcessor(
+            self.project,
+            self.module,
+            InputBuffer(self.test_macro.__name__, macro_stmt),
+        )
         proc.process()
 
     def test_macro_cont(self):
-        proc = CxxProcessor(self.project,
-                            self.module,
-                            InputBuffer(
-                                self.test_macro_cont.__name__,
-                                macro_cont_stmt))
+        proc = CxxProcessor(
+            self.project,
+            self.module,
+            InputBuffer(self.test_macro_cont.__name__, macro_cont_stmt),
+        )
         proc.process()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
-if [[ ! -x "autopep8" ]]; then
-    echo autopep8 is not insalled
+BLACK=$(which black)
+if [[ ! -x "$BLACK" ]]; then
+    echo black is not installed
     exit 1
 fi
 
 function format_file() {
     filename=$1
     echo formatting $filename
-    autopep8 --in-place $filename
+    $BLACK --line-length=79 $filename
 }
 
 for filename in `git ls-files '*.py'`;

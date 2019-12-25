@@ -30,16 +30,17 @@ class TestBuildPipeline(unittest.TestCase):
     def test_load_config(self):
         doc = yaml.safe_load(test_config)
         project = Builder().build_from_config(doc)
-        self.assertEqual(project.name, 'test-project')
+        self.assertEqual(project.name, "test-project")
 
     def test_invalid(self):
         def does_raise():
             doc = yaml.safe_load(test_invalid_config)
             Builder().build_from_config(doc)
+
         # self.assertRaises(ModuleNotFoundError, does_raise)
         # TODO: implement this test again
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

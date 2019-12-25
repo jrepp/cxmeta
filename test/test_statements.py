@@ -1,7 +1,7 @@
 import unittest
 
 from cxmeta.pipeline.source_module import Module
-from cxmeta.pipeline.cxx_processor import CxxProcessor, tokenize_cxx_identifiers
+from cxmeta.pipeline.cxx_processor import tokenize_cxx_identifiers
 from cxmeta.pipeline.combiner import Combiner
 from cxmeta.pipeline.stream import InputBuffer, InputDirectory
 from cxmeta.config.project import Project
@@ -107,77 +107,74 @@ void nested_func() {
 
 class TestStatements(unittest.TestCase):
     def setUp(self) -> None:
-        self.project = Project(config={'debug': False})
-        self.module = Module(self.project, InputDirectory('.'))
+        self.project = Project(config={"debug": False})
+        self.module = Module(self.project, InputDirectory("."))
 
     def process(self, name, content):
-        return Combiner(self.project,
-                        self.module,
-                        InputBuffer(
-                            name,
-                            content)).process()
+        return Combiner(
+            self.project, self.module, InputBuffer(name, content)
+        ).process()
 
     def test_file_level(self):
-        proc = self.process(self.test_file_level.__name__,
-                            static_statment)
+        self.process(self.test_file_level.__name__, static_statment)
 
     def test_typedef_enum(self):
-        proc = self.process(self.test_typedef_enum.__name__,
-                            typedef_enum_statement)
-        self.assert_classification(proc, r'enum')
+        proc = self.process(
+            self.test_typedef_enum.__name__, typedef_enum_statement
+        )
+        self.assert_classification(proc, r"enum")
 
     def test_enum(self):
-        proc = self.process(self.test_enum.__name__,
-                            enum_statment)
-        self.assert_classification(proc, r'enum')
+        proc = self.process(self.test_enum.__name__, enum_statment)
+        self.assert_classification(proc, r"enum")
 
     def test_typedef_struct(self):
-        proc = self.process(self.test_typedef_struct.__name__,
-                            struct_statement)
-        self.assert_classification(proc, r'struct')
+        proc = self.process(
+            self.test_typedef_struct.__name__, struct_statement
+        )
+        self.assert_classification(proc, r"struct")
 
     def test_struct(self):
-        proc = self.process(self.test_struct.__name__,
-                            struct_statement)
-        self.assert_classification(proc, r'struct')
+        proc = self.process(self.test_struct.__name__, struct_statement)
+        self.assert_classification(proc, r"struct")
 
     def test_typedef_int(self):
-        proc = self.process(self.test_typedef_int.__name__,
-                            typed_int)
-        self.assert_classification(proc, r'typedef')
+        proc = self.process(self.test_typedef_int.__name__, typed_int)
+        self.assert_classification(proc, r"typedef")
 
     def test_function_decl(self):
-        proc = self.process(self.test_function_decl.__name__,
-                            func_decl)
-        self.assert_classification(proc, r'function')
+        proc = self.process(self.test_function_decl.__name__, func_decl)
+        self.assert_classification(proc, r"function")
 
     def test_function_defn(self):
-        proc = self.process(self.test_function_defn.__name__,
-                            func_defn)
-        self.assert_classification(proc, r'function')
+        proc = self.process(self.test_function_defn.__name__, func_defn)
+        self.assert_classification(proc, r"function")
 
     def test_function_defn_egyptian(self):
-        proc = self.process(self.test_function_defn_egyptian.__name__,
-                            func_defn_egyptian)
-        self.assert_classification(proc, r'function')
+        proc = self.process(
+            self.test_function_defn_egyptian.__name__, func_defn_egyptian
+        )
+        self.assert_classification(proc, r"function")
 
     def test_function_nested(self):
-        proc = self.process(self.test_function_nested.__name__,
-                            func_nested)
-        self.assert_classification(proc, r'function')
+        proc = self.process(self.test_function_nested.__name__, func_nested)
+        self.assert_classification(proc, r"function")
 
     def test_tokenize_function_atom(self):
-        atom = 'void some_function('
-        self.assertListEqual(tokenize_cxx_identifiers(atom), ['void', 'some_function'])
+        atom = "void some_function("
+        self.assertListEqual(
+            tokenize_cxx_identifiers(atom), ["void", "some_function"]
+        )
 
-    def assert_classification(self, proc, type_str : str):
+    def assert_classification(self, proc, type_str: str):
         def classify_check():
             for chunk in proc.stream().read():
                 if type_str in chunk.types:
                     return True
             return False
+
         self.assertTrue(classify_check())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

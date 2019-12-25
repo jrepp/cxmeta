@@ -11,8 +11,9 @@ def parse_rst(text: str) -> docutils.nodes.document:
     parser = docutils.parsers.rst.Parser()
     components = (docutils.parsers.rst.Parser,)
     settings = docutils.frontend.OptionParser(
-        components=components).get_default_values()
-    document = docutils.utils.new_document('<rst-doc>', settings=settings)
+        components=components
+    ).get_default_values()
+    document = docutils.utils.new_document("<rst-doc>", settings=settings)
     parser.parse(text, document)
     return document
 
@@ -32,7 +33,7 @@ class RstProcessor(Processor):
         Processor.__init__(project, source, Chunk, Chunk)
 
 
-if __name__ == '__main__':
-    doc = parse_rst('spam spam lovely spam')
+if __name__ == "__main__":
+    doc = parse_rst("spam spam lovely spam")
     visitor = MyVisitor(doc)
     doc.walk(visitor)

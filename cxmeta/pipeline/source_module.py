@@ -10,24 +10,27 @@ class Module(Processor):
         self.project = project
         self.source = source
         self.name = module_name(source.full_path)
-        self.debug_files = project.config.get('debug_files', False)
-        self.include_paths = project.config.get('include_paths', list())
+        self.debug_files = project.config.get("debug_files", False)
+        self.include_paths = project.config.get("include_paths", list())
         self.files = list()
 
     def __str__(self):
-        return '[Module] <name: {}, full_path: {}'.format(
-            self.name, self.source.full_path)
+        return "[Module] <name: {}, full_path: {}".format(
+            self.name, self.source.full_path
+        )
 
     def process(self):
         if self.debug_files:
             print("# Processing module {}".format(self.name))
         # Look for a header / README.md
         for input_file in self.source.read():
-            if os.path.isdir(input_file.full_path) and \
-                    self.allowed_sub_path(input_file.full_path):
+            if os.path.isdir(input_file.full_path) and self.allowed_sub_path(
+                input_file.full_path
+            ):
                 # Create a new module to handle the sub-module
-                sub_module = Module(self.project,
-                                    InputDirectory(input_file.full_path))
+                sub_module = Module(
+                    self.project, InputDirectory(input_file.full_path)
+                )
                 if self.debug_files:
                     print("# Allowed sub-module {}".format(sub_module))
                 sub_module.process()
@@ -35,17 +38,23 @@ class Module(Processor):
                 continue
 
             _, ext = os.path.splitext(input_file.full_path)
-            if ext in ('.c', '.h'):
+            if ext in (".c", ".h"):
                 if self.debug_files:
-                    print("## [{}] processing path {}".format(
-                        self.name, input_file.full_path))
+                    print(
+                        "## [{}] processing path {}".format(
+                            self.name, input_file.full_path
+                        )
+                    )
                 file_proc = Combiner(self.project, self, input_file)
                 file_proc.process()
                 self.files.append(file_proc)
             else:
                 if self.debug_files:
-                    print("## [{}] ignoring path {}".format(
-                        self.name, input_file.full_path))
+                    print(
+                        "## [{}] ignoring path {}".format(
+                            self.name, input_file.full_path
+                        )
+                    )
         return self
 
     def allowed_sub_path(self, full_path):
