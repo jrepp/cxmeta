@@ -1,8 +1,11 @@
 import os
-import yaml
+import pyaml
 import logging
 
 from cxmeta.pipeline.source_module import module_name
+
+CONFIG_NAME = ".cxmeta.yml"
+
 
 log = logging.getLogger("ConfigLoader")
 
@@ -40,7 +43,9 @@ class ConfigLoader(object):
         self.doc = self.search_path(self.full_path)
         if self.doc is None:
             log.warning(
-                "no config file .cxmeta found in {}".format(self.full_path)
+                "no config file {} found in {}".format(
+                    CONFIG_NAME, self.full_path
+                )
             )
             self.doc = self.default_config()
         return self.doc
@@ -56,10 +61,10 @@ class ConfigLoader(object):
             return None
 
         abspath = os.path.abspath(path)
-        file_path = os.path.join(abspath, ".cxmeta")
+        file_path = os.path.join(abspath, CONFIG_NAME)
         if os.path.exists(file_path):
             with open(file_path, "r") as input_stream:
-                doc = yaml.safe_load(input_stream)
+                doc = pyaml.safe_load(input_stream)
                 doc["full_path"] = os.path.dirname(file_path)
                 return doc
         else:

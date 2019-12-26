@@ -3,3 +3,4 @@ grip
 autopep8
 pyflakes
 tox
+pre-commit

@@ -1,69 +1,33 @@
-# C eXtract Metadata
+# Make C/C++ documentation simple
 
-A python CLI and library to extract meta-data from Cxx style languages.
+`cxmeta` is a tool for making it simple to create good looking documentation directly from your C/C++ source code.
 
+While there are ways to make more attractive or feature-rich documentation, the tools are complicated and create extra work.
 
-## Running
+The hope for this tool is that it can find a good mix of simplicity and flexibility so that writing good documentation for your project is a no-brainer.
+
+## Run It!
 
     pip install cxmeta
     cxmeta <directory or file>
 
-`cxmeta` will create an **_output** directory next to your source files with the generated markdown document
+`cxmeta` is an opinionated and simple-minded tool, it wants to generate a README.md in your local directory.
 
-* TODO: document the .cxmeta file
-* TODO: document single vs multi-module files
-* TODO: work on meta-data extraction
-* TODO: work on styling extensions
-  * INFO breakout
-  * WARNING
-  * Using different code stylers
-
-Using `grip` to test your GitHub flavored markdown:
+`cxmeta` prefers GitHub flavored markdown which you can easily preview using `grip`:
 
     pip install grip
-    cd _output
     grip
 
+:electric_plug: Have a *README.md* or structure in mind? You can modifying the behavior of `cxmeta` through [configuration](DETAILS.md).
 
-## Description
+:triangular_ruler: If you want to style your documents or put out a different format Modifying the style of cxmeta requires [templates](DETAILS.md).
 
-This is not intended to be a full AST style exploration for static analysis.
 
-Instead, the goal is to pull embedded metadata and accompanying declarations from the code in order to support tasks such as DRY documentation.
+:chart_with_upwards_trend: [Interested in more? Read and profit!](DETAILS.md)
 
-C source | meta-data | Markdown/rST documentation
+:gift: [Want to contribute? Small gifts are welcome](CONTRIBUTING.md)
 
-I couldn't find any tools that made this process simple and effective. Initially I built a very small python script
-that would pull very-specifically formatted headers into markdown. This process was heavily opinionated in it's formatting
-requirements and brittle and inflexible in implementation.
+## Additional Reading
 
-This new approach is to provide a more flexible and powerful processing pipeline for the code which exposes comments,
-statements and expressions into a stream which can extract metadata.
-
-Additional meta-data rules at the end of the pipeline allow for rST authoring to make it simple for the source code author to export
-their types into simple and attractive documentation.
-
-[Additional Details](DETAILS.md)
-
-## Contributing
-
-Pull requests welcome!
-
-    pip install -r requirements_dev.txt
-
-Run lint (`./run_lint.sh`)
-
-    vim, set makeprg=./run_link.sh, :make
-
-Try using PyCharm as an IDEA.
-
-Check existing tests, add new ones:
-
-    tox
-
-## Additional Info
-
-* [GFM emojii](https://gist.github.com/rxaviers/7360908)
-* [Commonalities between rST and Markdown](https://gist.github.com/dupuy/1855764)
 * [Mastering Markdown](https://guides.github.com/features/mastering-markdown/)
-
+* [Commonalities between rST and Markdown](https://gist.github.com/dupuy/1855764)
