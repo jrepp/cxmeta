@@ -27,6 +27,13 @@ Each stage has input types and output types and is connected by streams.
 
 ## Working with structure
 
+The default structure supported by `cxmeta` is a single project processing some files in a directory. The output of the project is a README.md.
+
+The first thing you might want to do is to add an index or extra usage of `cxmeta` beyond generating a *README.md*
+
+`cxmeta` works from a principal of whitelisting requiring all directories and files to be explicitily added rather than ignored or blacklisted.
+
+
 ### Use your own README.md
 
 ### Multiple files

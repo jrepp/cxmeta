@@ -7,4 +7,6 @@
 *.egg-info/
 dist/
 __pycache__
+.mypy_cache
+.dmypy.json
 _output

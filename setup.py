@@ -1,5 +1,5 @@
 import subprocess
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages  # type: ignore
 
 
 DESCRIPTION = "A python CLI and library to extract \

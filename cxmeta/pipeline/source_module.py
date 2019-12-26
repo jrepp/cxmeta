@@ -13,6 +13,9 @@ class Module(Processor):
         self.debug_files = project.config.get("debug_files", False)
         self.include_paths = project.config.get("include_paths", list())
         self.files = list()
+        self.include_extensions = project.config.get(
+            "include_extensions", list()
+        )
 
     def __str__(self):
         return "[Module] <name: {}, full_path: {}".format(
@@ -27,7 +30,7 @@ class Module(Processor):
             if os.path.isdir(input_file.full_path) and self.allowed_sub_path(
                 input_file.full_path
             ):
-                # Create a new module to handle the sub-module
+                # Create a new module to handle the directory
                 sub_module = Module(
                     self.project, InputDirectory(input_file.full_path)
                 )
@@ -38,7 +41,7 @@ class Module(Processor):
                 continue
 
             _, ext = os.path.splitext(input_file.full_path)
-            if ext in (".c", ".h"):
+            if ext in self.include_extensions:
                 if self.debug_files:
                     print(
                         "## [{}] processing path {}".format(

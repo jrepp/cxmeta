@@ -8,15 +8,19 @@ The hope for this tool is that it can find a good mix of simplicity and flexibil
 
 ## Run It!
 
+```bash
     pip install cxmeta
     cxmeta <directory or file>
+```
 
 `cxmeta` is an opinionated and simple-minded tool, it wants to generate a README.md in your local directory.
 
 `cxmeta` prefers GitHub flavored markdown which you can easily preview using `grip`:
 
+```bash
     pip install grip
     grip
+```
 
 :electric_plug: Have a *README.md* or structure in mind? You can modifying the behavior of `cxmeta` through [configuration](DETAILS.md).
 

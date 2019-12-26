@@ -188,7 +188,7 @@ class Combiner(Processor):
 
     def _default_handler(self, atom: Atom):
         if type(atom.data) is dict and atom.data.get(r"content") is not None:
-            self._content_handler(self, atom)
+            self._content_handler(atom)
 
     def _newline_handler(self, _):
         if self.in_comment:

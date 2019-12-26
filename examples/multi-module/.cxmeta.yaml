@@ -1,0 +1,23 @@
+settings:
+    debug_exporter: true
+    debug_files: true
+    debug_chunks: true
+projects:
+    readme:
+        project_header: '_header.md'
+        output_file_name: 'README.md'
+        publish_single_file: true
+        include_paths:
+            - src/multi_module.h
+    index:
+        project_header: '_header.md'
+        output_dir: _output/index
+        include_paths:
+            - src/**
+    generator:
+        output_dir: _output/generator
+        include_paths:
+            - src/**
+        pipeline:
+            - exp-meta
+
