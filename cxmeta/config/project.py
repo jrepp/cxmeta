@@ -5,6 +5,18 @@ from cxmeta.pipeline.stream import InputDirectory, InputFile
 from . import random_name
 
 
+def get_output_path(full_project_path, config):
+    output_path = config.get("output_path")
+    if output_path:
+        return output_path
+
+    output_directory = config.get("output_directory")
+    if output_directory:
+        return os.path.join(full_project_path, output_directory)
+    else:
+        return full_project_path
+
+
 class Status(object):
     def __init__(self, success, msg, props):
         self.success = success
@@ -33,9 +45,7 @@ class Project(object):
         self.full_path = config.get("full_path", ".")
         assert self.full_path is not None
         assert os.path.exists(self.full_path)
-        self.output_path = config.get(
-            "output_path", os.path.join(self.full_path, "_output")
-        )
+        self.output_path = get_output_path(self.full_path, config)
         self.newline = config.get("newline", "\n")
         self.style = None
 

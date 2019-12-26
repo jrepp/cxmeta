@@ -2,7 +2,7 @@ import unittest
 import yaml
 
 from cxmeta.pipeline.builder import Builder
-
+from cxmeta.config.project import get_output_path
 
 test_config = """
 name: test-project
@@ -31,6 +31,15 @@ class TestBuildPipeline(unittest.TestCase):
         doc = yaml.safe_load(test_config)
         project = Builder().build_from_config(doc)
         self.assertEqual(project.name, "test-project")
+
+    def test_path_override(self):
+        self.assertEqual(
+            "/foo", get_output_path("/path/to/bar", {"output_path": "/foo"})
+        )
+        self.assertEqual(
+            "/path/to/bar/_out",
+            get_output_path("/path/to/bar", {"output_directory": "_out"}),
+        )
 
     def test_invalid(self):
         def does_raise():

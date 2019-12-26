@@ -25,6 +25,8 @@ include as the project header",
     #
     # File handling settings
     #
+    "output_directory": "Local output directory, will be relative to project root",
+    "output_path": "Full path to output, will override project root",
     "separate_source_files": "Separate source files into different outputs",
     "include_paths": "Whitelist of paths while processing modules",
 }
