@@ -1,34 +1,61 @@
 import os
 import yaml
 import logging
+from typing import Any, Optional, Tuple, Mapping
 
 from cxmeta.pipeline.source_module import module_name
 from cxmeta.style.registry import DEFAULT_STYLE
 
 CONFIG_NAME = ".cxmeta.yaml"
+MAX_RECURSION = 3
 
-VALID_SETTINGS = {
+VALID_SETTINGS: Mapping[str, Tuple[Any, str]] = {
     #
     # Debug settings
     #
-    "debug": "Enable all debug output",
-    "debug_matches": "Enable regex matching debug",
-    "debug_atoms": "Enable atom generation debug",
-    "debug_chunks": "Enable chunk/combiner debug",
-    "debug_files": "Enable file system debug",
-    "debug_export": "Enable export debugging",
+    "debug": (False, "Enable all debug output"),
+    "debug_matches": (False, "Enable regex matching debug"),
+    "debug_atoms": (False, "Enable atom generation debug"),
+    "debug_chunks": (False, "Enable chunk/combiner debug"),
+    "debug_files": (False, "Enable file system debug"),
+    "debug_export": (False, "Enable export debugging"),
     #
     # File handling settings
     #
     # General documentation settings
-    "project_header": "Relative path to the project header",
-    "output_directory": "Local output directory, relative to project root",
-    "output_path": "Full path to output, will override project root",
-    "separate_source_files": "Separate source files into different outputs",
-    "include_paths": "Whitelist of paths while processing modules",
-    "output_file_name": "Name of the project output file",
-    "publish_single_file": "Include all files in the project output file",
+    "project_header": (None, "Relative path to the project header"),
+    "output_directory": (
+        None,
+        "Local output directory, relative to project root",
+    ),
+    "output_path": (None, "Full path to output, will override project root"),
+    "separate_source_files": (
+        False,
+        "Separate source files into different outputs",
+    ),
+    "include_paths": (list(), "Whitelist of paths while processing modules"),
+    "include_extensions": ([".h"], "Extensions to parse"),
+    "output_file_name": ("README.md", "Name of the project output file"),
+    "publish_single_file": (
+        True,
+        "Include all files in the project output file",
+    ),
+    "style": (DEFAULT_STYLE, "Style to use for export"),
 }
+
+REQUIRED = {
+    "include_extensions",
+    "style",
+    "publish_single_file",
+    "output_file_name",
+}
+
+
+def get_default(name: str) -> Optional[Any]:
+    setting = VALID_SETTINGS.get(name)
+    if setting is not None:
+        return setting[0]
+    return None
 
 
 class ConfigLoader(object):
@@ -53,22 +80,28 @@ class ConfigLoader(object):
         return {
             "full_path": self.full_path,
             "name": module_name(self.full_path),
-            "publish_single_file": True,
-            "output_file_name": "README.md",
-            "include_extensions": [".h"],
-            "exporter": DEFAULT_STYLE,
+            "publish_single_file": get_default("publish_single_file"),
+            "output_file_name": get_default("output_file_name"),
+            "include_extensions": get_default("include_extensions"),
+            "style": DEFAULT_STYLE,
         }
 
-    def search_path(self, path, depth=0):
-        if depth > 5:
-            return None
+    @staticmethod
+    def update_with_defaults(doc):
+        """Update the config document with missing required defaults"""
+        for name in REQUIRED:
+            doc.setdefault(name, get_default(name))
 
+    def search_path(self, path, depth=0):
+        if depth > MAX_RECURSION:
+            return None
         abspath = os.path.abspath(path)
         file_path = os.path.join(abspath, CONFIG_NAME)
         if os.path.exists(file_path):
             with open(file_path, "r") as input_stream:
                 doc = yaml.safe_load(input_stream)
                 doc["full_path"] = os.path.dirname(file_path)
+                ConfigLoader.update_with_defaults(doc)
                 return doc
         else:
             # recurse up one directory

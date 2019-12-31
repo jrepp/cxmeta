@@ -26,10 +26,10 @@ class GfmReadmeStyle(GfmStyle):
     ) -> str:
         return "".join(
             [
-                "".join(chunk.comments),
+                "".join(chunk.docs),
                 "```c",
                 self.newline,
-                "".join(chunk.statements),
+                "".join(chunk.code),
                 "```",
                 self.newline,
             ]

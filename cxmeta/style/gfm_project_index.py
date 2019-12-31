@@ -52,11 +52,11 @@ class GfmProjectIndexStyle(GfmStyle):
             ")",
             self.newline,
             self.newline,
-            "".join(chunk.comments),
+            "".join(chunk.docs),
             self.newline,
         ]
 
-        trimmed_stmt = "".join(chunk.statements).strip()
+        trimmed_stmt = "".join(chunk.code).strip()
         if trimmed_stmt:
             export.extend(
                 [

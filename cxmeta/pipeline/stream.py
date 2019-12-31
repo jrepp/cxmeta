@@ -123,8 +123,8 @@ class Chunk(object):
     """
 
     def __init__(self):
-        self.comments = list()
-        self.statements = list()
+        self.docs = list()
+        self.code = list()
         self.types = list()
         self.names = list()
         self.directives = dict()
@@ -132,11 +132,11 @@ class Chunk(object):
 
     def __str__(self):
         return "[Chunk] \
-<line_num: {}, directives: {}, comments: {}, stmts: {}>".format(
+<line_num: {}, directives: {}, docs: {}, code: {}>".format(
             self.line_num,
             self.directives,
-            len(self.comments),
-            len(self.statements),
+            len(self.docs),
+            len(self.code),
         )
 
 

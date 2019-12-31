@@ -71,6 +71,7 @@ class CxxProcessor(Processor):
     NEWLINE = r"newline"
     COMMENT_START = r"comment_start"
     COMMENT_END = r"comment_end"
+    COMMENT_TOKEN = r"comment_token"
 
     def __init__(self, project, modules, source):
         Processor.__init__(self, project, source, InputFile, Chunk)
@@ -100,84 +101,30 @@ class CxxProcessor(Processor):
                 break
             matches.append(match)
             pos = match.end()
-
-        self.line_num = line.line_num
-        self.evaluate_matches(line.data, matches)
-
+        if len(matches) == 0:
+            self.emit_content(0, line.data)
+            self.emit_marker(len(line.data), CxxProcessor.NEWLINE)
+        else:
+            self.line_num = line.line_num
+            self.evaluate_matches(line.data, matches)
         return self
 
     def evaluate_matches(self, line, matches):
-        if len(matches) == 0:
-            self.emit(0, line)
-            self.emit_marker(len(line), CxxProcessor.NEWLINE)
-            return
-
         pos = 0
-
-        def capture_including(p):
-            return line[pos:p]
-
-        def capture_upto(p):
-            return line[pos:p]
-
-        def capture_remaining(p):
-            return line[p:]
-
-        for i, m in enumerate(matches):
-            assert m is not None
-            token = line[m.start() : m.end()]
+        for match in matches:
+            token = line[match.start() : match.end()]
             in_comment = self.in_comment | self.in_ml_comment
             if self.debug_matches:
                 print("match: '{}', comment?: {}".format(token, in_comment))
             if not in_comment:
-                if token == "{":
-                    self.emit(pos, capture_including(m.end()))
-                    self.emit_marker(m.start(), CxxProcessor.BLOCK_START)
-                elif token == "}":
-                    self.emit(pos, capture_including(m.end()))
-                    self.emit_marker(m.start(), CxxProcessor.BLOCK_END)
-                elif token == ";":
-                    self.emit(pos, capture_including(m.end()))
-                    self.emit_marker(m.start(), CxxProcessor.STMT_END)
-                elif token == "(":
-                    self.emit(pos, capture_including(m.end()))
-                    self.emit_marker(m.start(), CxxProcessor.EXPR_GROUP_START)
-                elif token == ")":
-                    self.emit(pos, capture_including(m.end()))
-                    self.emit_marker(m.start(), CxxProcessor.EXPR_GROUP_END)
-                elif token.startswith("/*"):
-                    assert self.in_ml_comment is False
-                    # emit content up to the comment marker
-                    self.emit(pos, capture_upto(m.start()))
-                    self.in_ml_comment = True
-                    self.emit_marker(pos, CxxProcessor.COMMENT_START)
-                    # special case for /**/ (there is also a pattern
-                    # match for this case)
-                    if token.endswith(r"*/"):
-                        self.in_ml_comment = False
-                        self.emit_marker(m.end(), CxxProcessor.COMMENT_END)
-                elif token.startswith("//"):
-                    self.emit(pos, capture_upto(m.start()))
-                    self.in_comment = True
-                    self.emit_marker(pos, CxxProcessor.COMMENT_START)
-            elif token.endswith("*/"):
-                assert self.in_ml_comment is True
-                self.emit(pos, capture_upto(m.start()))
-                self.in_ml_comment = False
-                self.emit_marker(pos, CxxProcessor.COMMENT_END)
-            elif token == "\\":  # only matches at end of line
-                self.emit(pos, capture_including(m.end()))
-                self.emit_marker(m.start(), CxxProcessor.LINE_CONT)
-            elif token == "#":  # only matches at beginning of line
-                self.emit_marker(m.start(), CxxProcessor.MACRO_START)
-                self.emit(pos, capture_including(m.end()))
+                self.evaluate_in_statement(pos, match, line, token)
             else:
-                self.emit(pos, capture_including(m.end()))
-            pos = m.end()
+                self.evaluate_in_comment(pos, match, line, token)
+            pos = match.end()
 
-        # write the remainder of the line if any
-        capture = capture_remaining(pos)
-        self.emit(pos, capture)
+        # write the remainder of the line if any, stripping embedded newlines
+        capture = line[pos:].rstrip("\r\n")
+        self.emit_content(pos, capture)
         self.emit_marker(pos + len(capture), CxxProcessor.NEWLINE)
 
         # line level comments always end when the line is finished
@@ -185,48 +132,81 @@ class CxxProcessor(Processor):
             self.in_comment = False
             self.emit_marker(pos + len(capture), CxxProcessor.COMMENT_END)
 
-    def emit(self, pos: int, capture: int):
-        if not capture:
+    def evaluate_in_statement(self, pos, match, line, token):
+        def capture_including_end(atom_type):
+            self.emit_content(pos, line[pos : match.end()])
+            self.emit_marker(match.start(), atom_type)
+
+        if token == r"{":
+            capture_including_end(CxxProcessor.BLOCK_START)
+        elif token == r"}":
+            capture_including_end(CxxProcessor.BLOCK_END)
+        elif token == r";":
+            capture_including_end(CxxProcessor.STMT_END)
+        elif token == r"(":
+            capture_including_end(CxxProcessor.EXPR_GROUP_START)
+        elif token == r")":
+            capture_including_end(CxxProcessor.EXPR_GROUP_END)
+        elif token.startswith(r"/*"):
+            self.emit_content(pos, line[pos : match.start()])
+            pos = match.start()
+            self.in_ml_comment = True
+            self.emit_marker(pos, CxxProcessor.COMMENT_START)
+            self.emit_comment_token(pos, line[pos : match.end()])
+            # special case for /**/
+            if token.endswith(r"*/"):
+                self.in_ml_comment = False
+                self.emit_marker(match.end(), CxxProcessor.COMMENT_END)
+        elif token.startswith(r"//"):
+            self.emit_content(pos, line[pos : match.start()])
+            pos = match.start()
+            self.in_comment = True
+            self.emit_marker(pos, CxxProcessor.COMMENT_START)
+            self.emit_comment_token(pos, line[pos : match.end()])
+
+    def evaluate_in_comment(self, pos, match, line, token):
+        def capture_including_end(atom_type):
+            self.emit_content(pos, line[pos : match.end()])
+            self.emit_marker(match.start(), atom_type)
+
+        if token.endswith(r"*/"):
+            self.emit_content(pos, line[pos : match.start()])
+            pos = match.start()
+            self.emit_comment_token(pos, line[pos : match.end()])
+            self.in_ml_comment = False
+            self.emit_marker(pos, CxxProcessor.COMMENT_END)
+        elif token == r"\\":  # only matches at end of line
+            capture_including_end(CxxProcessor.LINE_CONT)
+        elif token == r"#":  # only matches at beginning of line
+            capture_including_end(CxxProcessor.MACRO_START)
+        else:
+            self.emit_content(pos, line[pos : match.end()])
+
+    def emit(self, pos: int, **kwargs):
+        is_comment = self.in_ml_comment | self.in_comment
+        if self.debug_atoms:
+            print(
+                '[{}] [{}:{}#{}] "{}" comment?: {}'.format(
+                    kwargs["type"],
+                    self.stream_data.name,
+                    self.line_num,
+                    pos,
+                    kwargs.get(r"value", r""),
+                    is_comment,
+                )
+            )
+        self.stream_data.append(Atom(self.line_num, pos, kwargs))
+
+    def emit_content(self, pos: int, value: str):
+        if len(value) == 0:
             return
-        is_comment = self.in_ml_comment | self.in_comment
-        if self.debug_atoms:
-            print(
-                '[Content] [{}:{}#{}] "{}" comment?: {}'.format(
-                    self.stream_data.name,
-                    self.line_num,
-                    pos,
-                    capture,
-                    is_comment,
-                )
-            )
-        data = {r"type": CxxProcessor.CONTENT, r"value": capture}
-        self.stream_data.append(Atom(self.line_num, pos, data))
+        self.emit(pos, type=CxxProcessor.CONTENT, value=value)
 
-    def emit_macro(self, pos, capture):
-        if self.debug_atoms:
-            print(
-                '[Macro] [{}:{}#{}] "{}"'.format(
-                    self.stream_data.name, self.line_num, pos, capture
-                )
-            )
-        self.stream_data.append(
-            Atom(
-                self.line_num,
-                pos,
-                {r"type": CxxProcessor.MACRO, r"value": capture},
-            )
-        )
+    def emit_macro(self, pos: int, value: str):
+        self.emit(pos, type=CxxProcessor.MACRO, value=value)
 
-    def emit_marker(self, pos, marker):
-        is_comment = self.in_ml_comment | self.in_comment
-        if self.debug_atoms:
-            print(
-                "[Marker] [{}:{}#{}] {} comment?: {}".format(
-                    self.stream_data.name,
-                    self.line_num,
-                    pos,
-                    marker,
-                    is_comment,
-                )
-            )
-        self.stream_data.append(Atom(self.line_num, pos, {"type": marker}))
+    def emit_comment_token(self, pos: int, value: str):
+        self.emit(pos, type=CxxProcessor.COMMENT_TOKEN, value=value)
+
+    def emit_marker(self, pos: int, marker: str):
+        self.emit(pos, type=marker)

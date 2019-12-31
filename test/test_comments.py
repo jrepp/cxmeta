@@ -30,9 +30,10 @@ multiline_function_c_style = r"""
 def next_value(i):
     while True:
         atom = next(i)
-        content = atom.data.get("value")
-        if content:
-            return content
+        atom_type = atom.data.get("type")
+        value = atom.data.get("value")
+        if atom_type == r"content" and value is not None:
+            return value
 
 
 class TestComments(unittest.TestCase):

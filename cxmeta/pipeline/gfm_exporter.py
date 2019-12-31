@@ -1,5 +1,6 @@
 import sys
 import os
+import logging
 
 from cxmeta.style.registry import get_style_type
 
@@ -13,6 +14,7 @@ def copy_header_to_output(header_file_path, output_file):
 
 class GfmExporter(object):
     def __init__(self, project):
+        self.log = logging.getLogger("cxmeta")
         self.project = project
         self.output = sys.stdout
         self.debug_export = project.config.get("debug_exporter", False)
@@ -21,7 +23,12 @@ class GfmExporter(object):
         self.output_file_path = None  # computed path to current output file
         self.newline = project.newline
         assert self.newline is not None
-        style_class = get_style_type(project.config.get("exporter"))
+        style_name = project.config.get("style")
+        style_class = get_style_type(style_name)
+        if style_class is None:
+            raise ValueError(
+                "Exporter style '{}' not supported.".format(style_name)
+            )
         self.style = style_class()
 
     def open_output_for(self, module):
@@ -35,6 +42,9 @@ class GfmExporter(object):
             self.output_file_path = os.path.join(
                 self.output_path, module.name + ".md"
             )
+        self.log.info(
+            "writing module {} to {}".format(module, self.output_file_path)
+        )
         return open(self.output_file_path, "w+")
 
     def export_module(self, module):
@@ -82,6 +92,11 @@ class GfmExporter(object):
                         source_file
                     )
                 )
+            self.log.info(
+                "writing source {} to {}".format(
+                    source_file, self.output_file_path
+                )
+            )
             self.export_source_file_inner(
                 module_output_file, module, source_file
             )
@@ -96,6 +111,9 @@ class GfmExporter(object):
                     )
                 )
             with open(file_path, "w+") as output_file:
+                self.log.info(
+                    "writing source {} to {}".format(source_file, file_path)
+                )
                 self.export_source_file_inner(output_file, module, source_file)
 
     def export_source_file_inner(self, output_file, module, source_file):

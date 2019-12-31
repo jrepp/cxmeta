@@ -1,6 +1,7 @@
 import re
+import logging
 import os
-from typing import AnyStr
+from typing import AnyStr, SupportsInt
 
 from .cxx_processor import (
     CxxProcessor,
@@ -24,30 +25,13 @@ def full_to_relative(module, source_full_path):
     return source_full_path[len(prefix) + 1 :]
 
 
-def append_newline(lines, newline):
-    """
-    Convert consecutive newlines into a content-break (double newline)
-    """
-    content_break = newline * 2
-    try:
-        top = lines[-1]
-        if top == newline:
-            lines[-1] = content_break
-        elif top == content_break:
-            pass
-        else:
-            lines.append(newline)
-    except IndexError:
-        lines.append(newline)
-
-
 class ChunkBuilder(object):
     def __init__(self):
         self.line_num = 0
         self.comment_justification = 0
         self.directives = dict()
-        self.comments = list()
-        self.statements = list()
+        self.docs = list()
+        self.code = list()
         self.macros = list()
         self.types = list()
         self.names = list()
@@ -60,6 +44,12 @@ class ChunkBuilder(object):
 
     def is_function(self):
         return r"function" in self.types
+
+    def has_docs(self):
+        return len(self.docs) > 0
+
+    def has_code(self):
+        return len(self.code) > 0
 
     def parse_rst_directive(self, value):
         match = RST_DIRECTIVE_REGEXP.match(value)
@@ -79,26 +69,28 @@ class ChunkBuilder(object):
                 # Capture name outside of parameter lists
                 self.names.append(token)
 
-    def add_comment(self, value: AnyStr):
-        if not self.comments:
+    def add_doc(self, line_num: SupportsInt, value: AnyStr):
+        if not self.line_num:
+            self.line_num = line_num
+        if not self.docs:
             self.comment_justification = len(value) - len(value.lstrip())
-        self.comments.append(value[self.comment_justification :])
+        self.docs.append(value[self.comment_justification :])
 
-    def add_statement(self, value):
-        self.statements.append(value)
+    def add_code(self, value):
+        self.code.append(value)
 
     def build(self):
         # Skip chunks that are only whitespace
-        comment_str = ("".join(self.comments)).strip()
-        statement_str = ("".join(self.statements)).strip()
+        comment_str = ("".join(self.docs)).strip()
+        statement_str = ("".join(self.code)).strip()
         if not comment_str or not statement_str:
             return None
 
         chunk = Chunk()
         chunk.line_num = self.line_num
         chunk.directives = self.directives
-        chunk.comments = self.comments
-        chunk.statements = self.statements
+        chunk.docs = self.docs
+        chunk.code = self.code
         chunk.types = self.types
         chunk.names = self.names
         return chunk
@@ -113,10 +105,12 @@ class Combiner(Processor):
 
     def __init__(self, project, module, source):
         Processor.__init__(self, project, source, InputFile, Chunk)
+        self.log = logging.getLogger("cxmeta")
         self.proc = CxxProcessor(project, module, source)
         self.stream_data = Stream(source)
         self.builder = ChunkBuilder()
         self.in_comment = False
+        self.was_comment = False
         self.in_expr_group = False
         self.newline = "\n"
         self.block_level = 0
@@ -134,23 +128,20 @@ class Combiner(Processor):
         return self
 
     def _finish_chunk(self):
-        # Emit the chunk if it has a valid class name
         chunk = self.builder.build()
         if chunk is not None:
             if self.debug_chunks:
                 print("[_finish_chunk]: {}".format(chunk))
             self.stream_data.append(chunk)
-        # Start a new chunk
         self.builder = ChunkBuilder()
 
     def _block_start_handler(self, _):
-        # Out
         self.block_level += 1
 
     def _block_end_handler(self, _):
         self.block_level -= 1
         if self.block_level < 0:
-            print("[_block_end_handler]: unbalanced blocks")
+            self.log.error("[_block_end_handler]: unbalanced blocks")
             self.block_level = 0
         if self.block_level == 0:
             if not self.builder.is_typedef():
@@ -162,29 +153,43 @@ class Combiner(Processor):
             self._finish_chunk()
 
     def _comment_start(self, atom: Atom):
-        # The comment start marker will always be the first line of the chunk
-        self.in_comment = True
-        if not self.builder.line_num:
-            self.builder.line_num = atom.line_num
+        # Consider lines starting with comment lines as starting a comment
+        if atom.pos == 0:
+            self.in_comment = True
+
+            # Use the first comment line as the line number of the chunk
+            if not self.builder.line_num:
+                self.builder.line_num = atom.line_num
 
     def _comment_end(self, _):
         self.in_comment = False
 
+    def _comment_token(self, atom: Atom):
+        if self.in_comment:
+            if atom.pos > 0:
+                self.builder.add_doc(atom.line_num, atom.data[r"value"])
+        else:
+            self.builder.add_code(atom.data[r"value"])
+
     def _content_handler(self, atom: Atom):
         value = atom.data[r"value"]
         if self.in_comment:
+            # Emit a chunk when transitioning from statements
+            # to new comment blocks at the top level of statements
+            if not self.was_comment:
+                self._finish_chunk()
             # The first directive marks the chunk start
             stripped = value.strip()
             if stripped.startswith(".."):
                 self.builder.parse_rst_directive(stripped)
             else:
-                self.builder.add_comment(value)
+                self.builder.add_doc(atom.line_num, value)
         else:
-            # Parse the content into types and names if it
-            # occurs outside the top-level block
-            if self.block_level == 0:
+            # Parse statement data occurring at the beginning of lines into types
+            if atom.pos == 0:
                 self.builder.parse_cxx_decls(value, self.in_expr_group)
-            self.builder.add_statement(value)
+            self.builder.add_code(value)
+        self.was_comment = self.in_comment
 
     def _default_handler(self, atom: Atom):
         if type(atom.data) is dict and atom.data.get(r"content") is not None:
@@ -192,9 +197,19 @@ class Combiner(Processor):
 
     def _newline_handler(self, _):
         if self.in_comment:
-            append_newline(self.builder.comments, self.newline)
+            content_break = self.newline * 2
+            try:
+                top = self.builder.docs[-1]
+                if top == self.newline:
+                    self.builder.docs[-1] = content_break
+                elif top == content_break:
+                    pass
+                else:
+                    self.builder.docs.append(self.newline)
+            except IndexError:
+                self.builder.docs.append(self.newline)
         else:
-            append_newline(self.builder.statements, self.newline)
+            self.builder.code.append(self.newline)
 
     def _macro_handler(self, atom):
         self.builder.types.append("macro")
@@ -213,6 +228,7 @@ class Combiner(Processor):
             CxxProcessor.CONTENT: self._content_handler,
             CxxProcessor.COMMENT_START: self._comment_start,
             CxxProcessor.COMMENT_END: self._comment_end,
+            CxxProcessor.COMMENT_TOKEN: self._comment_token,
             CxxProcessor.BLOCK_START: self._block_start_handler,
             CxxProcessor.BLOCK_END: self._block_end_handler,
             CxxProcessor.STMT_END: self._statement_end_handler,
