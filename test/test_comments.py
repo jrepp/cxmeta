@@ -11,6 +11,7 @@ import logging
 
 from cxmeta.pipeline.cxx_processor import CxxProcessor
 from cxmeta.pipeline.source_module import Module
+from cxmeta.pipeline.combiner import Combiner
 from cxmeta.pipeline.stream import InputBuffer, InputDirectory, Atom
 from cxmeta.config.project import Project
 
@@ -103,6 +104,41 @@ class TestComments(unittest.TestCase):
         i = stream.read()
         self.assertEqual(next_value(i), " blah")
         self.assertEqual(next_value(i), " blah2")
+
+    def test_justify(self):
+        justify_text = r"""\
+//   0 spaces
+//    1 spaces
+//     2 spaces
+//      3 spaces
+// re-justified
+// re-justified
+        """
+        comments = Combiner(
+            self.project,
+            self.module,
+            InputBuffer("justify_text", justify_text),
+        )
+        stream = comments.process().stream()
+        counter = 0
+        chunk = next(stream.read())
+        doc_text = "".join(chunk.docs)
+
+        # scan the first three lines
+        for line in doc_text.splitlines():
+            parts = line.split()
+            if len(parts) < 2:
+                self.assertEqual("re-justified", parts[0])
+            try:
+                spaces = int(parts[0].strip())
+            except Exception:
+                raise
+            space_count = len(line) - len(line.lstrip())
+            self.assertEqual(spaces, space_count)
+            counter += spaces - counter
+            if spaces == 3:
+                break
+        self.assertEqual(3, counter)
 
 
 if __name__ == "__main__":

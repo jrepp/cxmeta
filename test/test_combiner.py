@@ -44,6 +44,28 @@ void function_two()
 void function_three () {}
 """
 
+cxx_mixed_chunks = r"""
+// # Documentation title
+//
+// Some additional text
+// ```c
+//    void embedded_code();
+// ```
+// [Read more](https://afake.link.com/index.html)
+
+extern "C" {
+
+// Documentation about Foo struct
+typedef struct Foo {
+    int a; // Embedded info about a
+} Foo;
+
+// Function documentation
+void final_function();
+
+}
+"""
+
 inline_comments = r"""
 // An enum with embedded comments
 typedef enum {
@@ -87,7 +109,7 @@ class TestCombiner(unittest.TestCase):
 
     def test_combine(self):
         combiner = self.process(self.test_combine.__name__, simple_combine)
-        self.assertEqual(len(combiner.stream_data.content), 1)
+        self.assertEqual(len(combiner.stream_data.content), 3)
         for chunk in combiner.stream().read():
             self.assertTrue(isinstance(chunk, Chunk))
 
@@ -145,6 +167,47 @@ class TestCombiner(unittest.TestCase):
                 "\n",
             ],
         )
+
+    def test_md_link(self):
+        combiner = self.process(
+            "link_text", "// [A link](https://wheredoesitgo.com/index.html)"
+        )
+        self.assertEqual(1, len(combiner.stream_data.content))
+        chunk = next(combiner.stream_data.read())
+        doc_text = "".join(chunk.docs).rstrip("\r\n")
+        self.assertEqual(
+            "[A link](https://wheredoesitgo.com/index.html)", doc_text
+        )
+
+    def test_cxx_mixed_chunks(self):
+        self.project.config["debug_chunks"] = True
+        self.project.config["debug_atoms"] = True
+        combiner = self.process("cxx_mixed_chunks", cxx_mixed_chunks)
+        self.assertEqual(3, len(combiner.stream_data.content))
+        reader = combiner.stream_data.read()
+
+        c1 = next(reader)
+        doc_text = "".join(c1.docs).rstrip()
+        self.assertTrue(doc_text.startswith("# Documentation title"))
+        self.assertTrue(doc_text.index("```") > 0)
+        self.assertTrue(
+            doc_text.endswith("[Read more](https://afake.link.com/index.html)")
+        )
+        self.assertEqual(0, len(c1.code))
+
+        c2 = next(reader)
+        doc_text = "".join(c2.docs).rstrip()
+        code_text = "".join(c2.code).rstrip()
+        self.assertEqual("Documentation about Foo struct", doc_text)
+        self.assertTrue(code_text.startswith("typedef struct Foo {"))
+        self.assertTrue(code_text.endswith("Foo;"))
+        self.assertTrue(code_text.index("// Embedded info about a") > 0)
+
+        c3 = next(reader)
+        doc_text = "".join(c3.docs).rstrip()
+        code_text = "".join(c3.code).rstrip()
+        self.assertEqual("Function documentation", doc_text)
+        self.assertEqual("void final_function();", code_text)
 
 
 if __name__ == "__main__":

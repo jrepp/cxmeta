@@ -133,10 +133,7 @@ class Chunk(object):
     def __str__(self):
         return "[Chunk] \
 <line_num: {}, directives: {}, docs: {}, code: {}>".format(
-            self.line_num,
-            self.directives,
-            len(self.docs),
-            len(self.code),
+            self.line_num, self.directives, len(self.docs), len(self.code),
         )
 
 

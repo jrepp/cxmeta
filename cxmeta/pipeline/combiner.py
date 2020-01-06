@@ -1,7 +1,6 @@
 import re
 import logging
 import os
-from typing import AnyStr, SupportsInt
 
 from .cxx_processor import (
     CxxProcessor,
@@ -12,7 +11,7 @@ from .cxx_processor import (
 from .stream import Stream, Chunk, InputFile, Processor, Atom
 
 
-RST_DIRECTIVE_REGEXP = re.compile(r"\.\.(?P<name>\w+)\:\:\s+?(?P<value>\w+)")
+RST_DIRECTIVE_REGEXP = re.compile(r"\.\.(?P<name>\w+)::\s+?(?P<value>\w+)")
 
 
 WHITESPACE_REGEXP = re.compile(r"^\s+?")
@@ -28,7 +27,8 @@ def full_to_relative(module, source_full_path):
 class ChunkBuilder(object):
     def __init__(self):
         self.line_num = 0
-        self.comment_justification = 0
+        self.left_justified_spaces = 0
+        self.left_justified_pos = 0
         self.directives = dict()
         self.docs = list()
         self.code = list()
@@ -61,6 +61,7 @@ class ChunkBuilder(object):
         self.directives[name] = value
 
     def parse_cxx_decls(self, value, in_expr_group):
+        """Convert the statement text into types and names"""
         for token in tokenize_cxx_identifiers(value):
             if is_cxx_type(token):
                 # Capture cxx specific types
@@ -69,21 +70,53 @@ class ChunkBuilder(object):
                 # Capture name outside of parameter lists
                 self.names.append(token)
 
-    def add_doc(self, line_num: SupportsInt, value: AnyStr):
+    def add_doc(self, atom: Atom):
+        value = atom.data[r"value"]
+        # Convert tabs to spaces
+        value.replace("\t", "    ")
+
+        # Do one time setup of docs section
         if not self.line_num:
-            self.line_num = line_num
-        if not self.docs:
-            self.comment_justification = len(value) - len(value.lstrip())
-        self.docs.append(value[self.comment_justification :])
+            self.line_num = atom.line_num
+            self.left_justified_spaces = len(value) - len(value.lstrip())
+            self.left_justified_pos = atom.pos
+
+        # Process rST directives
+        stripped_value = value.lstrip()
+        if stripped_value.startswith(".."):
+            self.parse_rst_directive(stripped_value)
+
+        # Remove leading whitespace of doc lines that are left aligned
+        # with the original documentation line
+        leading_spaces = len(value) - len(value.lstrip())
+        should_justify = (
+            atom.pos == self.left_justified_pos
+            and leading_spaces >= self.left_justified_spaces
+        )
+        if should_justify:
+            value = value[self.left_justified_spaces :]
+        self.docs.append(value)
+
+    def add_doc_newline(self, newline):
+        """Turn consecutive newlines into content breaks"""
+        content_break = newline * 2
+        try:
+            top = self.docs[-1]
+            if top == newline:
+                self.docs[-1] = content_break
+            elif top == content_break:
+                pass
+            else:
+                self.docs.append(newline)
+        except IndexError:
+            self.docs.append(newline)
 
     def add_code(self, value):
         self.code.append(value)
 
     def build(self):
-        # Skip chunks that are only whitespace
-        comment_str = ("".join(self.docs)).strip()
-        statement_str = ("".join(self.code)).strip()
-        if not comment_str or not statement_str:
+        # Skip chunks that are only documented by whitespace
+        if not ("".join(self.docs)).strip():
             return None
 
         chunk = Chunk()
@@ -103,14 +136,20 @@ class Combiner(Processor):
     Tagged comment/statement blocks.
     """
 
+    STATE_NONE = "none"
+    STATE_DOCS = "docs"
+    STATE_CODE = "code"
+
     def __init__(self, project, module, source):
         Processor.__init__(self, project, source, InputFile, Chunk)
         self.log = logging.getLogger("cxmeta")
         self.proc = CxxProcessor(project, module, source)
         self.stream_data = Stream(source)
+        self.state = Combiner.STATE_NONE
         self.builder = ChunkBuilder()
         self.in_comment = False
-        self.was_comment = False
+        self.last_doc_comment_line = 0
+        self.last_stmt_line = 0
         self.in_expr_group = False
         self.newline = "\n"
         self.block_level = 0
@@ -127,6 +166,11 @@ class Combiner(Processor):
         self.combine()
         return self
 
+    def _change_state(self, new_state):
+        if self.debug_chunks:
+            print("[_change_state]: {} -> {}".format(self.state, new_state))
+        self.state = new_state
+
     def _finish_chunk(self):
         chunk = self.builder.build()
         if chunk is not None:
@@ -134,91 +178,78 @@ class Combiner(Processor):
                 print("[_finish_chunk]: {}".format(chunk))
             self.stream_data.append(chunk)
         self.builder = ChunkBuilder()
+        self._change_state(Combiner.STATE_NONE)
 
     def _block_start_handler(self, _):
-        self.block_level += 1
+        if self.state == Combiner.STATE_CODE:
+            self.block_level += 1
 
     def _block_end_handler(self, _):
-        self.block_level -= 1
-        if self.block_level < 0:
-            self.log.error("[_block_end_handler]: unbalanced blocks")
-            self.block_level = 0
-        if self.block_level == 0:
-            if not self.builder.is_typedef():
-                # If the chunk is a typedef the block is part of a statement
-                self._finish_chunk()
+        if self.state == Combiner.STATE_CODE:
+            self.block_level -= 1
 
-    def _statement_end_handler(self, _):
-        if self.block_level == 0:
-            self._finish_chunk()
+    def _statement_end_handler(self, atom):
+        self.last_stmt_line = atom.line_num
 
     def _comment_start(self, atom: Atom):
-        # Consider lines starting with comment lines as starting a comment
+        self.in_comment = True
+
+        # Consider lines starting with comment lines as starting documentation
         if atom.pos == 0:
-            self.in_comment = True
+            self.last_doc_comment_line = atom.line_num
+            if self.state == Combiner.STATE_NONE:
+                self._change_state(Combiner.STATE_DOCS)
 
-            # Use the first comment line as the line number of the chunk
-            if not self.builder.line_num:
-                self.builder.line_num = atom.line_num
-
-    def _comment_end(self, _):
+    def _comment_end(self, atom: Atom):
         self.in_comment = False
 
     def _comment_token(self, atom: Atom):
-        if self.in_comment:
-            if atom.pos > 0:
-                self.builder.add_doc(atom.line_num, atom.data[r"value"])
-        else:
+        if self.state == Combiner.STATE_CODE:
             self.builder.add_code(atom.data[r"value"])
 
     def _content_handler(self, atom: Atom):
         value = atom.data[r"value"]
-        if self.in_comment:
-            # Emit a chunk when transitioning from statements
-            # to new comment blocks at the top level of statements
-            if not self.was_comment:
-                self._finish_chunk()
-            # The first directive marks the chunk start
-            stripped = value.strip()
-            if stripped.startswith(".."):
-                self.builder.parse_rst_directive(stripped)
+        if self.state == Combiner.STATE_DOCS:
+            # Content occurring right after documentation will be included
+            # as code. Note that if the current line was "documentation"
+            # last_doc_comment_line would be equal to atom.line_num
+            if self.last_doc_comment_line == (atom.line_num - 1):
+                self._change_state(Combiner.STATE_CODE)
             else:
-                self.builder.add_doc(atom.line_num, value)
-        else:
-            # Parse statement data occurring at the beginning of lines into types
-            if atom.pos == 0:
+                self.builder.add_doc(atom)
+
+        if self.state == Combiner.STATE_CODE:
+            # Parse statement data on line start into types
+            if atom.pos == 0 and self.block_level == 0:
                 self.builder.parse_cxx_decls(value, self.in_expr_group)
             self.builder.add_code(value)
-        self.was_comment = self.in_comment
 
     def _default_handler(self, atom: Atom):
         if type(atom.data) is dict and atom.data.get(r"content") is not None:
             self._content_handler(atom)
 
-    def _newline_handler(self, _):
-        if self.in_comment:
-            content_break = self.newline * 2
-            try:
-                top = self.builder.docs[-1]
-                if top == self.newline:
-                    self.builder.docs[-1] = content_break
-                elif top == content_break:
-                    pass
-                else:
-                    self.builder.docs.append(self.newline)
-            except IndexError:
-                self.builder.docs.append(self.newline)
-        else:
-            self.builder.code.append(self.newline)
+    def _newline_handler(self, atom: Atom):
+        if self.state == Combiner.STATE_DOCS:
+            # Empty line
+            if atom.pos == 0:
+                self._finish_chunk()
+            else:
+                self.builder.add_doc_newline(self.newline)
+        elif self.state == Combiner.STATE_CODE:
+            # Empty line when block enclosed
+            if atom.pos == 0 and self.block_level == 0:
+                self._finish_chunk()
+            else:
+                self.builder.add_code(self.newline)
 
     def _macro_handler(self, atom):
         self.builder.types.append("macro")
         self.builder.macros.append(atom.data.get("content"))
 
-    def _expr_group_start(self, atom):
+    def _expr_group_start(self, _):
         self.in_expr_group = True
 
-    def _expr_group_end(self, atom):
+    def _expr_group_end(self, _):
         self.in_expr_group = False
         if not self.builder.is_macro() and not self.builder.is_function():
             self.builder.types.append(r"function")

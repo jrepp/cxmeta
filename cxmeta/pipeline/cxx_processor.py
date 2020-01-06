@@ -95,6 +95,7 @@ class CxxProcessor(Processor):
     def each_line(self, line: Line):
         matches = []
         pos = 0
+        self.line_num = line.line_num
         while True:
             match = self.match.search(line.data, pos)
             if match is None or match.start() == match.end():
@@ -102,10 +103,10 @@ class CxxProcessor(Processor):
             matches.append(match)
             pos = match.end()
         if len(matches) == 0:
+            line.data.rstrip("\r\n")
             self.emit_content(0, line.data)
             self.emit_marker(len(line.data), CxxProcessor.NEWLINE)
         else:
-            self.line_num = line.line_num
             self.evaluate_matches(line.data, matches)
         return self
 
