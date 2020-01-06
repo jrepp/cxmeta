@@ -24,13 +24,23 @@ class GfmReadmeStyle(GfmStyle):
     def chunk(
         self, module: Module, source_file: Combiner, chunk: Chunk
     ) -> str:
-        return "".join(
-            [
-                "".join(chunk.docs),
+        buffer = list()
+        # Make a simple chunk title out of any proper names
+        if chunk.names:
+            buffer += [ "### ", ' '.join(chunk.names), self.newline, self.newline ]
+
+        # Main document section
+        buffer += ["".join(chunk.docs)]
+
+        # Additional code section
+        if chunk.code:
+            buffer += [
+                self.newline,
                 "```c",
                 self.newline,
-                "".join(chunk.code),
+                "".join(chunk.code).rstrip(),
+                self.newline,
                 "```",
                 self.newline,
-            ]
-        )
+                self.newline]
+        return "".join(buffer)

@@ -56,6 +56,7 @@ cxx_mixed_chunks = r"""
 extern "C" {
 
 // Documentation about Foo struct
+#define FOO_DEFAULT_A 42
 typedef struct Foo {
     int a; // Embedded info about a
 } Foo;
@@ -182,6 +183,7 @@ class TestCombiner(unittest.TestCase):
     def test_cxx_mixed_chunks(self):
         self.project.config["debug_chunks"] = True
         self.project.config["debug_atoms"] = True
+        self.project.config["debug_matches"] = True
         combiner = self.process("cxx_mixed_chunks", cxx_mixed_chunks)
         self.assertEqual(3, len(combiner.stream_data.content))
         reader = combiner.stream_data.read()
@@ -199,7 +201,8 @@ class TestCombiner(unittest.TestCase):
         doc_text = "".join(c2.docs).rstrip()
         code_text = "".join(c2.code).rstrip()
         self.assertEqual("Documentation about Foo struct", doc_text)
-        self.assertTrue(code_text.startswith("typedef struct Foo {"))
+        self.assertTrue(code_text.startswith("#define FOO"))
+        self.assertTrue(code_text.index("typedef struct Foo {") > 0)
         self.assertTrue(code_text.endswith("Foo;"))
         self.assertTrue(code_text.index("// Embedded info about a") > 0)
 

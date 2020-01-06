@@ -48,7 +48,7 @@ class InputFile(StreamDatum):
             line_num = 0
             for line in open_file.readlines():
                 line_num += 1
-                yield Line(line_num, line)
+                yield Line(line_num, line.rstrip("\r\n"))
 
 
 class InputBuffer(InputFile):

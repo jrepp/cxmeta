@@ -220,12 +220,12 @@ class Combiner(Processor):
 
         if self.state == Combiner.STATE_CODE:
             # Parse statement data on line start into types
-            if atom.pos == 0 and self.block_level == 0:
+            if self.block_level == 0:
                 self.builder.parse_cxx_decls(value, self.in_expr_group)
             self.builder.add_code(value)
 
     def _default_handler(self, atom: Atom):
-        if type(atom.data) is dict and atom.data.get(r"content") is not None:
+        if type(atom.data) is dict and atom.data.get(r"value") is not None:
             self._content_handler(atom)
 
     def _newline_handler(self, atom: Atom):
@@ -243,8 +243,11 @@ class Combiner(Processor):
                 self.builder.add_code(self.newline)
 
     def _macro_handler(self, atom):
-        self.builder.types.append("macro")
-        self.builder.macros.append(atom.data.get("content"))
+        self.builder.types.append(r"macro")
+        self.builder.macros.append(atom.data.get(r"value"))
+        # Pass macro data through as content to drive the
+        # general content state machine
+        self._content_handler(atom)
 
     def _expr_group_start(self, _):
         self.in_expr_group = True
@@ -270,6 +273,8 @@ class Combiner(Processor):
         }
         self.builder = ChunkBuilder()
         for atom in self.proc.stream().read():
+            if self.debug_chunks:
+                print("input atom: {}".format(atom))
             handler = handlers.get(atom.data[r"type"]) or self._default_handler
             handler(atom)
         self._finish_chunk()

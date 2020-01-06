@@ -103,7 +103,6 @@ class CxxProcessor(Processor):
             matches.append(match)
             pos = match.end()
         if len(matches) == 0:
-            line.data.rstrip("\r\n")
             self.emit_content(0, line.data)
             self.emit_marker(len(line.data), CxxProcessor.NEWLINE)
         else:
@@ -164,6 +163,8 @@ class CxxProcessor(Processor):
             self.in_comment = True
             self.emit_marker(pos, CxxProcessor.COMMENT_START)
             self.emit_comment_token(pos, line[pos : match.end()])
+        elif token.startswith(r"#"):
+            self.emit_macro(pos, token)
 
     def evaluate_in_comment(self, pos, match, line, token):
         def capture_including_end(atom_type):
