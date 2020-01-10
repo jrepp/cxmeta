@@ -1,5 +1,8 @@
 # Make C/C++ documentation simple
 
+![](https://github.com/jrepp/cxmeta/workflows/Python%20package/badge.svg)
+![](https://github.com/jrepp/cxmeta/workflows/Upload%20Python%20Package/badge.svg)
+
 `cxmeta` is a tool for making it simple to create good looking documentation directly from your C/C++ source code.
 
 While there are ways to make more attractive or feature-rich documentation, the tools are complicated and create extra work.
