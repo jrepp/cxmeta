@@ -1,0 +1,3 @@
+uses: jpetrucciani/mypy-check@master
+with:
+  path: '.'
