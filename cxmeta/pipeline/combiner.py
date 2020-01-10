@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import re
 import logging
 import os
-from __future__ import annotations
 
 from .cxx_processor import (
     CxxProcessor,
