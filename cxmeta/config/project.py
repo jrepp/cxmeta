@@ -61,7 +61,6 @@ class Project(object):
                 "is_dir": os.path.isdir(self.full_path),
             },
         )
-        return Status(False, "file_error")
 
     def load_module(self):
         if os.path.isdir(self.full_path):

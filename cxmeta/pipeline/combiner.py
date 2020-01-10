@@ -1,6 +1,7 @@
 import re
 import logging
 import os
+from __future__ import annotations
 
 from .cxx_processor import (
     CxxProcessor,
@@ -53,6 +54,8 @@ class ChunkBuilder(object):
 
     def parse_rst_directive(self, value):
         match = RST_DIRECTIVE_REGEXP.match(value)
+        if match is None:
+            return
         name = match.group("name")
         value = match.group("value")
         assert match is not None
@@ -161,7 +164,7 @@ class Combiner(Processor):
             self.source.full_path, len(self.stream_data.content)
         )
 
-    def process(self):
+    def process(self) -> Combiner:
         self.proc.process()
         self.combine()
         return self

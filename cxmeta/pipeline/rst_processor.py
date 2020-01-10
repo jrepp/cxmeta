@@ -30,7 +30,7 @@ class MyVisitor(docutils.nodes.NodeVisitor):
 
 class RstProcessor(Processor):
     def __init__(self, project, source):
-        Processor.__init__(project, source, Chunk, Chunk)
+        Processor.__init__(self, project, source, Chunk, Chunk)
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ class GfmProjectIndexStyle(GfmStyle):
         self.debug_export = project.config.get("debug_exporter", False)
 
     def start_module(self, module: Module) -> str:
-        return "# " + module.name + self.newline
+        return ''.join(["# ", module.name, self.newline])
 
     def end_module(self, module):
         return cxmeta_footer()

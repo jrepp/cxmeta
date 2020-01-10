@@ -3,6 +3,7 @@ import os
 import sys
 import logging
 import colorlog  # type: ignore
+from typing import Dict
 from docopt import docopt  # type: ignore
 from cxmeta.pipeline.builder import Builder
 from cxmeta.config.config_loader import ConfigLoader, VALID_SETTINGS
@@ -63,7 +64,9 @@ def main():
 
     # Load the project config, combine with arguments
     config = ConfigLoader(full_path).doc
-    config.setdefault("settings", dict()).setdefault("debug", debug)
+    settings_dict: Dict[str, Dict] = config.setdefault("settings", dict())
+    settings_dict.setdefault("debug", debug)
+
     log.info("project-config:")
     for k, v in config.items():
         log.info("  {}: {}".format(k, v))

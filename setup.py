@@ -1,4 +1,5 @@
 import subprocess
+from typing import List
 from setuptools import setup, find_packages  # type: ignore
 
 
@@ -10,12 +11,12 @@ def read_git_version():
     proc = subprocess.Popen(
         ["git", "rev-parse", "--short", "HEAD"], stdout=subprocess.PIPE
     )
-    buffer = []
+    buffer: List[str] = list()
     while True:
         line = proc.stdout.readline()
         if not line:
             break
-        buffer.append(line.rstrip())
+        buffer.append(line.rstrip().decode('utf8'))
     return "".join(buffer)
 
 
@@ -35,7 +36,8 @@ setup(
     packages=find_packages(),
     scripts=["cxmeta/tools/cli.py"],
     install_requires=["docopt", "docutils",],
-    package_data={"": ["*.md", "*.rst"]},
+    package_data=
+    {"": ["*.md", "*.rst"]},
     entry_points={"console_scripts": ["cxmeta=cxmeta.tools.cli:main"],},
     author="Jacob Repp",
     author_email="jacobrepp@gmail.com",

@@ -1,3 +1,5 @@
+import os
+from typing import List
 from cxmeta.style.gfm_common import GfmStyle
 from cxmeta.pipeline.stream import Chunk
 from cxmeta.pipeline.source_module import Module
@@ -6,7 +8,7 @@ from cxmeta.pipeline.combiner import Combiner
 
 class GfmReadmeStyle(GfmStyle):
     def __init__(self):
-        self.newline = None
+        self.newline = os.linesep
 
     def start_module(self, module: Module) -> str:
         self.newline = module.project.newline
@@ -24,7 +26,7 @@ class GfmReadmeStyle(GfmStyle):
     def chunk(
         self, module: Module, source_file: Combiner, chunk: Chunk
     ) -> str:
-        buffer = list()
+        buffer: List[str] = list()
         # Make a simple chunk title out of any proper names
         if chunk.names:
             buffer += [ "### ", ' '.join(chunk.names), self.newline, self.newline ]

@@ -180,7 +180,7 @@ class CxxProcessor(Processor):
         elif token == r"\\":  # only matches at end of line
             capture_including_end(CxxProcessor.LINE_CONT)
         elif token == r"#":  # only matches at beginning of line
-            capture_including_end(CxxProcessor.MACRO_START)
+            capture_including_end(CxxProcessor.MACRO)
         else:
             self.emit_content(pos, line[pos : match.end()])
 

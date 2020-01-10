@@ -61,20 +61,25 @@ def get_default(name: str) -> Optional[Any]:
 class ConfigLoader(object):
     def __init__(self, full_path="."):
         self.full_path = full_path
-        self.doc = None
+        self.doc = dict()
         self.load()
 
     def load(self):
         log = logging.getLogger("cxmeta")
-        self.doc = self.search_path(self.full_path)
-        if self.doc is None:
+        file_path = ConfigLoader.search_path(self.full_path)
+        if file_path is None:
             log.warning(
                 "no config file {} found in {}".format(
                     CONFIG_NAME, self.full_path
                 )
             )
-            self.doc = self.default_config()
-        return self.doc
+            return self.default_config()
+        else:
+            with open(file_path, "r") as input_stream:
+                doc = yaml.safe_load(input_stream)
+                doc["full_path"] = os.path.dirname(file_path)
+                ConfigLoader.update_with_defaults(doc)
+                return doc
 
     def default_config(self):
         return {
@@ -92,19 +97,15 @@ class ConfigLoader(object):
         for name in REQUIRED:
             doc.setdefault(name, get_default(name))
 
-    def search_path(self, path, depth=0):
+    @staticmethod
+    def search_path(path, depth=0):
         if depth > MAX_RECURSION:
             return None
         abspath = os.path.abspath(path)
         file_path = os.path.join(abspath, CONFIG_NAME)
         if os.path.exists(file_path):
-            with open(file_path, "r") as input_stream:
-                doc = yaml.safe_load(input_stream)
-                doc["full_path"] = os.path.dirname(file_path)
-                ConfigLoader.update_with_defaults(doc)
-                return doc
-        else:
-            # recurse up one directory
-            parent = os.path.dirname(path)
-            self.search_path(parent, depth + 1)
-        return None
+            return file_path
+        # recurse up one directory
+        parent = os.path.dirname(path)
+        return ConfigLoader.search_path(parent, depth + 1)
+
